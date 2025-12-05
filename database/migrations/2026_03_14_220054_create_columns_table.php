@@ -7,17 +7,17 @@ use Illuminate\Support\Facades\Schema;
 return new class () extends Migration {
     public function up(): void
     {
-        Schema::create('boards', function (Blueprint $table) {
+        Schema::create('columns', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('board_id')->constrained()->cascadeOnDelete();
             $table->string('name', 100);
-            $table->string('status', 20)->default('active');
+            $table->unsignedInteger('position');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('boards');
+        Schema::dropIfExists('columns');
     }
 };
