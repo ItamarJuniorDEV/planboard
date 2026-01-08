@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\SubtaskController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -42,3 +43,9 @@ Route::patch('/projects/{projectId}/boards/{boardId}/columns/{columnId}/tasks/{t
 Route::patch('/projects/{projectId}/tasks/bulk-move', [TaskController::class, 'bulkMove']);
 Route::delete('/projects/{projectId}/tasks/bulk-delete', [TaskController::class, 'bulkDelete']);
 
+// subtasks
+Route::get('/projects/{projectId}/tasks/{taskId}/subtasks', [SubtaskController::class, 'index']);
+Route::get('/projects/{projectId}/tasks/{taskId}/subtasks/{id}', [SubtaskController::class, 'show']);
+Route::post('/projects/{projectId}/tasks/{taskId}/subtasks', [SubtaskController::class, 'store']);
+Route::put('/projects/{projectId}/tasks/{taskId}/subtasks/{id}', [SubtaskController::class, 'update']);
+Route::delete('/projects/{projectId}/tasks/{taskId}/subtasks/{id}', [SubtaskController::class, 'destroy']);
