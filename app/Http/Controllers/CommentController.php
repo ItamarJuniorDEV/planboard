@@ -1,0 +1,202 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Comment;
+use App\Models\Project;
+use Illuminate\Http\Request;
+use Throwable;
+
+class CommentController extends Controller
+{
+    public function index(Request $request, int $projectId, int $taskId)
+    {
+        $validate = $request->validate([
+            'per_page' => ['integer', 'nullable', 'min:1', 'max:50'],
+        ]);
+
+        try {
+            $perPage = $validate['per_page'] ?? 50;
+
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json([
+                    'message' => 'Projeto não encontrado!',
+                ], 404);
+            }
+
+            $task = $project->tasks()->find($taskId);
+            if (!$task) {
+                return response()->json([
+                    'message' => 'Tarefa não encontrada!',
+                ], 404);
+            }
+
+            $comments = $task->comments()->paginate($perPage);
+            return response()->json([
+                'message' => 'Comentários listados com sucesso!',
+                'data' => $comments,
+            ], 200);
+
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro interno no servidor ao tentar buscar comentários!',
+            ], 500);
+        }
+    }
+
+    public function store(Request $request, int $projectId, int $taskId)
+    {
+        $validate = $request->validate([
+            'content' => ['required', 'string'],
+            'author' => ['required', 'string', 'max:100'],
+        ]);
+
+        try {
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json([
+                    'message' => 'Projeto não encontrado!',
+                ], 404);
+            }
+
+            $task = $project->tasks()->find($taskId);
+            if (!$task) {
+                return response()->json([
+                    'message' => 'Tarefa não encontrada!',
+                ], 404);
+            }
+
+            $comment = new Comment();
+            $comment->task_id = $task->id;
+            $comment->content = $validate['content'];
+            $comment->author = $validate['author'];
+            $comment->save();
+
+            return response()->json([
+                'message' => 'Comentário criado com sucesso!',
+                'data' => $comment,
+            ], 201);
+
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro interno no servidor ao tentar adicionar comentário!',
+            ], 500);
+        }
+
+    }
+    public function show(int $projectId, int $taskId, int $id)
+    {
+        try {
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json([
+                    'message' => 'Projeto não encontrado!',
+                ], 404);
+            }
+
+            $task = $project->tasks()->find($taskId);
+            if (!$task) {
+                return response()->json([
+                    'message' => 'Tarefa não encontrada!',
+                ], 404);
+            }
+
+            $comment = $task->comments()->find($id);
+            if (!$comment) {
+                return response()->json([
+                    'message' => 'Comentário não encontrado!',
+                ], 404);
+            }
+
+            return response()->json([
+                'message' => 'Comentário encontrado!',
+                'data' => $comment,
+            ], 200);
+
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro interno no servidor ao tentar buscar comentário!',
+            ], 500);
+        }
+    }
+    public function update(Request $request, int $projectId, int $taskId, int $id)
+    {
+        $validate = $request->validate([
+            'content' => ['required', 'string'],
+            'author' => ['required', 'string', 'max:100'],
+        ]);
+
+        try {
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json([
+                    'message' => 'Projeto não encontrado!',
+                ], 404);
+            }
+
+            $task = $project->tasks()->find($taskId);
+            if (!$task) {
+                return response()->json([
+                    'message' => 'Tarefa não encontrada!',
+                ], 404);
+            }
+
+            $comment = $task->comments()->find($id);
+            if (!$comment) {
+                return response()->json([
+                    'message' => 'Comentário não encontrado!',
+                ], 404);
+            }
+            $comment->content = $validate['content'];
+            $comment->author = $validate['author'];
+            $comment->save();
+
+            return response()->json([
+                'message' => 'Comentário atualizado com sucesso!',
+                'data' => $comment,
+            ], 200);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro interno ao tentar atualizar comentário!',
+            ], 500);
+        }
+    }
+    public function destroy(int $projectId, int $taskId, int $id)
+    {
+        try {
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json([
+                    'message' => 'Projeto não encontrado!',
+                ], 404);
+            }
+
+            $task = $project->tasks()->find($taskId);
+            if (!$task) {
+                return response()->json([
+                    'message' => 'Tarefa não encontrada!',
+                ], 404);
+            }
+
+            $comment = $task->comments()->find($id);
+            if (!$comment) {
+                return response()->json([
+                    'message' => 'Comentário não encontrado!',
+                ], 404);
+            }
+
+            $comment->delete();
+
+            return response()->json([
+                'message' => 'Comentário excluído com sucesso!',
+                'data' => $comment,
+            ], 200);
+
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => 'Erro interno no servidor ao tentar excluir comentário!',
+            ], 500);
+        }
+    }
+}
