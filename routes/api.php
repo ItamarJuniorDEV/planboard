@@ -8,6 +8,7 @@ use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\SubtaskController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\MilestoneController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -57,3 +58,10 @@ Route::get('/projects/{projectId}/tasks/{taskId}/comments/{id}', [CommentControl
 Route::post('/projects/{projectId}/tasks/{taskId}/comments', [CommentController::class, 'store']);
 Route::put('/projects/{projectId}/tasks/{taskId}/comments/{id}', [CommentController::class, 'update']);
 Route::delete('/projects/{projectId}/tasks/{taskId}/comments/{id}', [CommentController::class, 'destroy']);
+
+// marco
+Route::get('/projects/{projectId}/milestones', [MilestoneController::class, 'index']);
+Route::get('/projects/{projectId}/milestones/{id}', [MilestoneController::class, 'show']);
+Route::post('/projects/{projectId}/milestones', [MilestoneController::class, 'store']);
+Route::put('/projects/{projectId}/milestones/{id}', [MilestoneController::class, 'update']);
+Route::delete('/projects/{projectId}/milestones/{id}', [MilestoneController::class, 'destroy']);
