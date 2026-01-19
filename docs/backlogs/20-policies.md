@@ -1,4 +1,4 @@
-# Backlog Item #22: Policies — Quem Pode Editar/Deletar o Quê
+# Backlog Item #20: Policies — Quem Pode Editar/Deletar o Quê
 
 ## Contexto de negócio
 

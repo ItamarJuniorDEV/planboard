@@ -1,4 +1,4 @@
-# Backlog Item #13: CRUD de Colunas do Board
+# Backlog Item #7: CRUD de Colunas do Board
 
 ## Contexto de negócio
 

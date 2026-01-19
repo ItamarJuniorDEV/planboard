@@ -44,7 +44,7 @@ Route::put('/projects/{projectId}/tasks/{id}', [TaskController::class, 'update']
 Route::delete('/projects/{projectId}/tasks/{id}', [TaskController::class, 'destroy']);
 Route::patch('/projects/{projectId}/boards/{boardId}/columns/{columnId}/tasks/{taskId}/move', [TaskController::class, 'moveToColumn']);
 Route::patch('/projects/{projectId}/tasks/bulk-move', [TaskController::class, 'bulkMove']);
-Route::delete('/projects/{projectId}/tasks/bulk-delete', [TaskController::class, 'bulkDelete']);
+Route::post('/projects/{projectId}/tasks/bulk-delete', [TaskController::class, 'bulkDelete']);
 
 // subtasks
 Route::get('/projects/{projectId}/tasks/{taskId}/subtasks', [SubtaskController::class, 'index']);

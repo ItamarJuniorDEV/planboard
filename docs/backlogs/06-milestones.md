@@ -1,4 +1,4 @@
-# Backlog Item #12: CRUD de Milestones (Marcos)
+# Backlog Item #6: CRUD de Milestones (Marcos)
 
 ## Contexto de negócio
 

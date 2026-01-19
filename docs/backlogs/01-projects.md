@@ -1,4 +1,4 @@
-Backlog Item #7: CRUD Completo de Projetos
+Backlog Item #1: CRUD Completo de Projetos
 
 Como usuário da API, eu quero gerenciar os projetos da empresa.
 

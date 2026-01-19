@@ -12,12 +12,7 @@ class Task extends Model
         'description',
         'priority',
         'status',
-        'completed',
         'column_id',
-    ];
-
-    protected $casts = [
-        'completed' => 'boolean',
     ];
 
     public function project()

@@ -14,7 +14,7 @@ class TaskController extends Controller
     {
         $validate = $request->validate([
             'per_page' => ['integer', 'nullable', 'min:1', 'max:50'],
-            'priority' => ['nullable', 'string', 'max:20'],
+            'priority' => ['nullable', 'string', 'in:low,medium,high,urgent'],
             'search' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:todo,doing,done'],
         ]);
@@ -26,6 +26,7 @@ class TaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -55,11 +56,14 @@ class TaskController extends Controller
             $tasks = $query->paginate($perPage);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Tarefas listadas com sucesso!',
                 'data' => $tasks,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar listar as tarefas!',
             ], 500);
         }
@@ -72,6 +76,7 @@ class TaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -80,16 +85,20 @@ class TaskController extends Controller
 
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Tarefa encontrada com sucesso!',
                 'data' => $task,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno ao buscar tarefa!',
             ], 500);
         }
@@ -100,8 +109,7 @@ class TaskController extends Controller
         $validate = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'priority' => ['required', 'string', 'max:20'],
-            'completed' => ['required', 'boolean'],
+            'priority' => ['required', 'string', 'in:low,medium,high,urgent'],
             'status' => ['required', 'string', 'in:todo,doing,done'],
         ]);
 
@@ -110,6 +118,7 @@ class TaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -119,16 +128,18 @@ class TaskController extends Controller
             $task->title = $validate['title'];
             $task->description = $validate['description'] ?? null;
             $task->priority = $validate['priority'];
-            $task->completed = $validate['completed'];
             $task->status = $validate['status'];
             $task->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Tarefa criada com sucesso!',
                 'data' => $task,
             ], 201);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao criar tarefa!',
             ], 500);
         }
@@ -139,8 +150,7 @@ class TaskController extends Controller
         $validate = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'priority' => ['required', 'string', 'max:20'],
-            'completed' => ['required', 'boolean'],
+            'priority' => ['required', 'string', 'in:low,medium,high,urgent'],
             'status' => ['required', 'string', 'in:todo,doing,done'],
         ]);
 
@@ -149,6 +159,7 @@ class TaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -157,6 +168,7 @@ class TaskController extends Controller
 
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
@@ -164,16 +176,18 @@ class TaskController extends Controller
             $task->title = $validate['title'];
             $task->description = $validate['description'] ?? null;
             $task->priority = $validate['priority'];
-            $task->completed = $validate['completed'];
             $task->status = $validate['status'];
             $task->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Tarefa atualizada com sucesso!',
                 'data' => $task,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao atualizar tarefa!',
             ], 500);
         }
@@ -186,6 +200,7 @@ class TaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -194,17 +209,23 @@ class TaskController extends Controller
 
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
 
+            $deletedTask = $task;
             $task->delete();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Tarefa excluída com sucesso!',
+                'data' => $deletedTask,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao excluir tarefa!',
             ], 500);
         }
@@ -217,6 +238,7 @@ class TaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -225,6 +247,7 @@ class TaskController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
@@ -233,6 +256,7 @@ class TaskController extends Controller
 
             if (!$column) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Coluna não encontrada!',
                 ], 404);
             }
@@ -241,6 +265,7 @@ class TaskController extends Controller
 
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
@@ -249,11 +274,14 @@ class TaskController extends Controller
             $task->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Tarefa movida com sucesso!',
                 'data' => $task,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar mover tarefa!',
             ], 500);
         }
@@ -272,6 +300,7 @@ class TaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -280,6 +309,7 @@ class TaskController extends Controller
 
             if (!$column) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Coluna não encontrada!',
                 ], 404);
             }
@@ -288,32 +318,26 @@ class TaskController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Essa coluna não pertence a este projeto!',
                 ], 404);
             }
 
-            $moved = 0;
-            $notFound = [];
+            $found = $project->tasks()->whereIn('id', $validate['task_ids'])->pluck('id')->toArray();
+            $notFound = array_values(array_diff($validate['task_ids'], $found));
 
-            foreach ($validate['task_ids'] as $taskId) {
-                $task = $project->tasks()->find($taskId);
-
-                if ($task) {
-                    $task->column_id = $column->id;
-                    $task->save();
-                    $moved++;
-                } else {
-                    $notFound[] = $taskId;
-                }
-            }
+            $project->tasks()->whereIn('id', $found)->update(['column_id' => $column->id]);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Operação concluída!',
-                'moved' => $moved,
+                'moved' => count($found),
                 'not_found' => $notFound,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao mover tarefas!',
             ], 500);
         }
@@ -331,31 +355,26 @@ class TaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
 
-            $deleted = 0;
-            $notFound = [];
+            $found = $project->tasks()->whereIn('id', $validate['task_ids'])->pluck('id')->toArray();
+            $notFound = array_values(array_diff($validate['task_ids'], $found));
 
-            foreach ($validate['task_ids'] as $taskId) {
-                $task = $project->tasks()->find($taskId);
-
-                if ($task) {
-                    $task->delete();
-                    $deleted++;
-                } else {
-                    $notFound[] = $taskId;
-                }
-            }
+            $project->tasks()->whereIn('id', $found)->delete();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Operação concluída!',
-                'deleted' => $deleted,
+                'deleted' => count($found),
                 'not_found' => $notFound,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao deletar tarefas!',
             ], 500);
         }

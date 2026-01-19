@@ -1,4 +1,4 @@
-# Backlog Item #17: Operações em Lote com foreach
+# Backlog Item #11: Operações em Lote
 
 ## User Story
 
@@ -7,7 +7,7 @@ Como usuário da API, eu quero executar ações em várias tarefas ao mesmo temp
 ## Critérios de aceite
 
 - PATCH `/projects/{projectId}/tasks/bulk-move` → 200 ou 404
-- DELETE `/projects/{projectId}/tasks/bulk-delete` → 200 ou 404
+- POST `/projects/{projectId}/tasks/bulk-delete` → 200 ou 404
 
 ## Endpoint 1: Bulk Move (mover várias tasks pra uma coluna)
 
@@ -29,11 +29,10 @@ Como usuário da API, eu quero executar ações em várias tarefas ao mesmo temp
 ### Regras
 
 - verificar se o projeto existe
-- verificar se a coluna existe
-- percorrer as task_ids com `foreach`
-- buscar cada task dentro do projeto ($project->tasks()->find($id))
-- se a task existir → atualiza o column_id
-- se a task NÃO existir → ignora e continua (não para tudo)
+- verificar se a coluna existe e pertence ao projeto
+- buscar todas as tasks de uma vez com `whereIn`
+- calcular quais IDs não foram encontrados com `array_diff`
+- atualizar todas as encontradas com um único `update`
 - no final, retorna quantas foram movidas e quais IDs não foram encontrados
 
 ### Resposta de sucesso (200)
@@ -64,10 +63,9 @@ Como usuário da API, eu quero executar ações em várias tarefas ao mesmo temp
 ### Regras
 
 - verificar se o projeto existe
-- percorrer as task_ids com `foreach`
-- buscar cada task dentro do projeto ($project->tasks()->find($id))
-- se a task existir → deleta
-- se a task NÃO existir → ignora e continua
+- buscar todas as tasks de uma vez com `whereIn`
+- calcular quais IDs não foram encontrados com `array_diff`
+- deletar todas as encontradas com um único `delete`
 - no final, retorna quantas foram deletadas e quais IDs não foram encontrados
 
 ### Resposta de sucesso (200)

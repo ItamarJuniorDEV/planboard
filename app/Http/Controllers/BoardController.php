@@ -13,6 +13,8 @@ class BoardController extends Controller
     {
         $validate = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'status' => ['nullable', 'string', 'in:active,archived'],
+            'search' => ['nullable', 'string'],
         ]);
 
         $perPage = $validate['per_page'] ?? 20;
@@ -22,19 +24,33 @@ class BoardController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
 
-            $boards = $project->boards()->paginate($perPage);
+            $query = $project->boards();
+
+            if (isset($validate['status'])) {
+                $query->where('status', $validate['status']);
+            }
+
+            if (isset($validate['search'])) {
+                $query->where('name', 'LIKE', '%' . $validate['search'] . '%');
+            }
+
+            $boards = $query->paginate($perPage);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Quadros listados com sucesso!',
                 'data' => $boards,
             ], 200);
 
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar listar os quadros!',
             ], 500);
         }
@@ -47,6 +63,7 @@ class BoardController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -55,17 +72,21 @@ class BoardController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Quadro encontrado com sucesso!',
                 'data' => $board,
             ], 200);
 
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar encontrar o quadro!',
             ], 500);
         }
@@ -75,7 +96,7 @@ class BoardController extends Controller
     {
         $validate = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'max:20'],
+            'status' => ['required', 'string', 'in:active,archived'],
         ]);
 
         try {
@@ -83,6 +104,7 @@ class BoardController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -94,12 +116,15 @@ class BoardController extends Controller
             $board->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Quadro criado com sucesso!',
                 'data' => $board,
             ], 201);
 
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar criar o quadro!',
             ], 500);
         }
@@ -109,7 +134,7 @@ class BoardController extends Controller
     {
         $validate = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'max:20'],
+            'status' => ['required', 'string', 'in:active,archived'],
         ]);
 
         try {
@@ -117,6 +142,7 @@ class BoardController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -125,6 +151,7 @@ class BoardController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
@@ -134,12 +161,15 @@ class BoardController extends Controller
             $board->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Quadro atualizado com sucesso!',
                 'data' => $board,
             ], 200);
 
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar atualizar o quadro!',
             ], 500);
         }
@@ -152,6 +182,7 @@ class BoardController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -160,6 +191,7 @@ class BoardController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
@@ -167,12 +199,15 @@ class BoardController extends Controller
             $board->delete();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Quadro excluído com sucesso!',
                 'data' => $board,
             ], 200);
 
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar excluir o quadro!',
             ], 500);
         }

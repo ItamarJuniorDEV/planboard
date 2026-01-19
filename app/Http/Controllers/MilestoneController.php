@@ -21,16 +21,20 @@ class MilestoneController extends Controller
             $project = Project::find($projectId);
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
             $milestones = $project->milestones()->paginate($perPage);
             return response()->json([
+                'success' => true,
                 'message' => 'Marcos listados com sucesso!',
                 'data' => $milestones,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar listar os marcos!',
             ], 500);
         }
@@ -48,6 +52,7 @@ class MilestoneController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -59,11 +64,14 @@ class MilestoneController extends Controller
             $milestone->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Marco criado com sucesso!',
                 'data' => $milestone,
             ], 201);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar criar novo marco!',
             ], 500);
         }
@@ -81,6 +89,7 @@ class MilestoneController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -89,6 +98,7 @@ class MilestoneController extends Controller
 
             if (!$milestone) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Marco não encontrado!',
                 ], 404);
             }
@@ -98,11 +108,14 @@ class MilestoneController extends Controller
             $milestone->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Marco atualizado com sucesso!',
                 'data' => $milestone,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar atualizar o marco!',
             ], 500);
         }
@@ -115,6 +128,7 @@ class MilestoneController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -123,16 +137,20 @@ class MilestoneController extends Controller
 
             if (!$milestone) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Marco não encontrado!',
                 ], 404);
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Marco encontrado com sucesso!',
                 'data' => $milestone,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar buscar marco!',
             ], 500);
         }
@@ -145,6 +163,7 @@ class MilestoneController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -153,6 +172,7 @@ class MilestoneController extends Controller
 
             if (!$milestone) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Marco não encontrado!',
                 ], 404);
             }
@@ -160,11 +180,14 @@ class MilestoneController extends Controller
             $milestone->delete();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Marco excluído com sucesso!',
                 'data' => $milestone,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar deletar marco!',
             ], 500);
         }

@@ -22,6 +22,7 @@ class ColumnController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -30,6 +31,7 @@ class ColumnController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
@@ -37,11 +39,14 @@ class ColumnController extends Controller
             $columns = $board->columns()->paginate($perPage);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Colunas listadas com sucesso!',
                 'data' => $columns,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar listar colunas!',
             ], 500);
         }
@@ -54,6 +59,7 @@ class ColumnController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -62,6 +68,7 @@ class ColumnController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
@@ -70,16 +77,20 @@ class ColumnController extends Controller
 
             if (!$column) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Coluna não encontrada!',
                 ], 404);
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Coluna encontrada com sucesso!',
                 'data' => $column,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor!',
             ], 500);
         }
@@ -97,6 +108,7 @@ class ColumnController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -105,6 +117,7 @@ class ColumnController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
@@ -116,11 +129,14 @@ class ColumnController extends Controller
             $column->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Coluna criada com sucesso!',
                 'data' => $column,
             ], 201);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno ao tentar criar coluna!',
             ], 500);
         }
@@ -138,6 +154,7 @@ class ColumnController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -146,6 +163,7 @@ class ColumnController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
@@ -154,6 +172,7 @@ class ColumnController extends Controller
 
             if (!$column) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Coluna não encontrada!',
                 ], 404);
             }
@@ -163,11 +182,14 @@ class ColumnController extends Controller
             $column->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Coluna atualizada com sucesso!',
                 'data' => $column,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar atualizar coluna!',
             ], 500);
         }
@@ -180,6 +202,7 @@ class ColumnController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -188,6 +211,7 @@ class ColumnController extends Controller
 
             if (!$board) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
             }
@@ -196,17 +220,23 @@ class ColumnController extends Controller
 
             if (!$column) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Coluna não encontrada!',
                 ], 404);
             }
 
+            $deletedColumn = $column;
             $column->delete();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Coluna deletada com sucesso!',
+                'data' => $deletedColumn,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar deletar coluna!',
             ], 500);
         }

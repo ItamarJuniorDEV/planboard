@@ -1,4 +1,4 @@
-# Backlog Item #16: Filtros e Busca nas Tasks
+# Backlog Item #10: Filtros e Busca nas Tasks
 
 ## User Story
 
@@ -14,7 +14,7 @@ Como usuário da API, eu quero filtrar e buscar tarefas para encontrar mais ráp
 ## Campos de filtro
 
 - `status` — opcional, string, in:todo,doing,done
-- `priority` — opcional, string, max:20
+- `priority` — opcional, string, in:low,medium,high,urgent
 - `search` — opcional, string
 - `per_page` — opcional, inteiro, mínimo 1, máximo 50
 
@@ -27,7 +27,7 @@ Como usuário da API, eu quero filtrar e buscar tarefas para encontrar mais ráp
 ## Validações
 
 - `status` — nullable, string, in:todo,doing,done
-- `priority` — nullable, string, max:20
+- `priority` — nullable, string, in:low,medium,high,urgent
 - `search` — nullable, string
 - `per_page` — nullable, integer, min:1, max:50
 
@@ -37,7 +37,7 @@ Como usuário da API, eu quero filtrar e buscar tarefas para encontrar mais ráp
 
 ---
 
-# Backlog Item #16.1: Filtros e Busca nos Projects
+# Backlog Item #10.1: Filtros e Busca nos Projects
 
 ## User Story
 
@@ -54,7 +54,7 @@ Como usuário da API, eu quero filtrar e buscar projetos para encontrar mais rá
 
 ## Campos de filtro
 
-- `status` — opcional, string, max:30
+- `status` — opcional, string, in:draft,planning,active,on_hold,completed,cancelled
 - `search` — opcional, string
 - `deadline_from` — opcional, date
 - `deadline_to` — opcional, date

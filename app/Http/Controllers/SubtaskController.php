@@ -23,6 +23,7 @@ class SubtaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -31,6 +32,7 @@ class SubtaskController extends Controller
 
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
@@ -38,11 +40,14 @@ class SubtaskController extends Controller
             $subTasks = $task->subtasks()->paginate($perPage);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Subtarefas listadas com sucesso!',
                 'data' => $subTasks,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao listar SubTasks!',
             ], 500);
         }
@@ -55,6 +60,7 @@ class SubtaskController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -63,6 +69,7 @@ class SubtaskController extends Controller
 
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
@@ -71,16 +78,20 @@ class SubtaskController extends Controller
 
             if (!$subTask) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Subtarefa não encontrada!',
                 ], 404);
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Subtask encontrada!',
                 'data' => $subTask,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar buscar Sub Tarefa!',
             ], 500);
         }
@@ -98,6 +109,7 @@ class SubtaskController extends Controller
             $project = Project::find($projectId);
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -105,6 +117,7 @@ class SubtaskController extends Controller
             $task = $project->tasks()->find($taskId);
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
@@ -116,11 +129,14 @@ class SubtaskController extends Controller
             $subtask->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Subtarefa criada com sucesso!',
                 'data' => $subtask,
             ], 201);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar criar SubTarefa!',
             ], 500);
         }
@@ -136,6 +152,7 @@ class SubtaskController extends Controller
             $project = Project::find($projectId);
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -143,6 +160,7 @@ class SubtaskController extends Controller
             $task = $project->tasks()->find($taskId);
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
@@ -150,6 +168,7 @@ class SubtaskController extends Controller
             $subtask = $task->subtasks()->find($id);
             if (!$subtask) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Subtarefa não encontrada!',
                 ], 404);
             }
@@ -159,11 +178,14 @@ class SubtaskController extends Controller
             $subtask->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Subtarefa atualizada com sucesso!',
                 'data' => $subtask,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno ao tentar atualizar a subtarefa!',
             ], 500);
         }
@@ -177,6 +199,7 @@ class SubtaskController extends Controller
             $project = Project::find($projectId);
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -184,6 +207,7 @@ class SubtaskController extends Controller
             $task = $project->tasks()->find($taskId);
             if (!$task) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
             }
@@ -191,17 +215,21 @@ class SubtaskController extends Controller
             $subtask = $task->subtasks()->find($id);
             if (!$subtask) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Subtarefa não encontrada!',
                 ], 404);
             }
 
             $subtask->delete();
             return response()->json([
+                'success' => true,
                 'message' => 'Subtarefa excluída com sucesso!',
                 'data' => $subtask,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno ao tentar excluir subtarefa!',
             ], 500);
         }

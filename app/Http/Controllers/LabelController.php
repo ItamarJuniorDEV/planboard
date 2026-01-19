@@ -22,6 +22,7 @@ class LabelController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -29,11 +30,14 @@ class LabelController extends Controller
             $labels = $project->labels()->paginate($perPage);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Etiquetas listadas com sucesso!',
                 'data' => $labels,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar listar as etiquetas!',
             ], 500);
         }
@@ -46,6 +50,7 @@ class LabelController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -54,16 +59,20 @@ class LabelController extends Controller
 
             if (!$label) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Etiqueta não encontrada!',
                 ], 404);
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Etiqueta encontrada com sucesso!',
                 'data' => $label,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar buscar etiqueta!',
             ], 500);
         }
@@ -81,6 +90,7 @@ class LabelController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -92,11 +102,14 @@ class LabelController extends Controller
             $label->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Etiqueta criada com sucesso!',
                 'data' => $label,
             ], 201);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar criar etiqueta!',
             ], 500);
         }
@@ -114,6 +127,7 @@ class LabelController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -122,6 +136,7 @@ class LabelController extends Controller
 
             if (!$label) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Etiqueta não encontrada!',
                 ], 404);
             }
@@ -131,11 +146,14 @@ class LabelController extends Controller
             $label->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Etiqueta atualizada com sucesso!',
                 'data' => $label,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar atualizar etiqueta!',
             ], 500);
         }
@@ -148,6 +166,7 @@ class LabelController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -156,6 +175,7 @@ class LabelController extends Controller
 
             if (!$label) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Etiqueta não encontrada!',
                 ], 404);
             }
@@ -163,11 +183,14 @@ class LabelController extends Controller
             $label->delete();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Etiqueta excluída com sucesso!',
                 'data' => $label,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar excluir etiqueta!',
             ], 500);
         }

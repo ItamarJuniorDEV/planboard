@@ -1,4 +1,4 @@
-# Backlog Item #14: CRUD de Labels (Etiquetas)
+# Backlog Item #8: CRUD de Labels (Etiquetas)
 
 ## Contexto de negócio
 

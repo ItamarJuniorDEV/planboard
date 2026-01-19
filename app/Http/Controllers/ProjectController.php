@@ -12,7 +12,7 @@ class ProjectController extends Controller
     {
         $validate = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-            'status' => ['nullable', 'string', 'max:30'],
+            'status' => ['nullable', 'string', 'in:draft,planning,active,on_hold,completed,cancelled'],
             'search' => ['nullable', 'string'],
             'deadline_from' => ['nullable', 'date'],
             'deadline_to' => ['nullable', 'date'],
@@ -48,12 +48,15 @@ class ProjectController extends Controller
             $projects = $query->paginate($perPage);
 
             return response()->json([
+                'success' => true,
                 'message' => 'Projetos listados com sucesso!',
                 'data' => $projects,
             ], 200);
 
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar listar os projetos!',
             ], 500);
         }
@@ -67,16 +70,20 @@ class ProjectController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
 
             return response()->json([
+                'success' => true,
                 'message' => 'Projeto encontrado com sucesso!',
                 'data' => $project,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor ao tentar buscar o projeto!',
             ], 500);
         }
@@ -88,7 +95,7 @@ class ProjectController extends Controller
             'title' => ['required', 'string', 'max:200'],
             'description' => ['nullable', 'string'],
             'budget' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'max:30'],
+            'status' => ['required', 'string', 'in:draft,planning,active,on_hold,completed,cancelled'],
             'deadline' => ['nullable', 'date'],
         ]);
 
@@ -102,11 +109,14 @@ class ProjectController extends Controller
             $project->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Projeto criado com sucesso!',
                 'data' => $project,
             ], 201);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Não foi possível criar o projeto!',
             ], 500);
         }
@@ -118,7 +128,7 @@ class ProjectController extends Controller
             'title' => ['required', 'string', 'max:200'],
             'description' => ['nullable', 'string'],
             'budget' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'max:30'],
+            'status' => ['required', 'string', 'in:draft,planning,active,on_hold,completed,cancelled'],
             'deadline' => ['nullable', 'date'],
         ]);
 
@@ -127,6 +137,7 @@ class ProjectController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
@@ -139,11 +150,14 @@ class ProjectController extends Controller
             $project->save();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Projeto atualizado com sucesso!',
                 'data' => $project,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor!',
             ], 500);
         }
@@ -156,17 +170,23 @@ class ProjectController extends Controller
 
             if (!$project) {
                 return response()->json([
+                    'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
 
+            $deletedProject = $project;
             $project->delete();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Projeto excluído com sucesso!',
+                'data' => $deletedProject,
             ], 200);
         } catch (Throwable $e) {
+            report($e);
             return response()->json([
+                'success' => false,
                 'message' => 'Erro interno no servidor!',
             ], 500);
         }

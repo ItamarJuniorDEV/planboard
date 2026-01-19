@@ -18,7 +18,6 @@ return new class () extends Migration {
             $table->text('description')->nullable();
             $table->string('priority', 20)->default('medium');
             $table->string('status', 20)->default('todo');
-            $table->boolean('completed')->default(false);
             $table->timestamps();
         });
     }
