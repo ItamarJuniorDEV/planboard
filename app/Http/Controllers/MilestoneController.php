@@ -13,6 +13,9 @@ class MilestoneController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['integer', 'nullable', 'min:1', 'max:20'],
+            'search' => ['nullable', 'string'],
+            'due_from' => ['nullable', 'date'],
+            'due_to' => ['nullable', 'date'],
         ]);
 
         $perPage = $validated['per_page'] ?? 20;
@@ -25,7 +28,22 @@ class MilestoneController extends Controller
                     'message' => 'Projeto não encontrado!',
                 ], 404);
             }
-            $milestones = $project->milestones()->paginate($perPage);
+            $query = $project->milestones();
+
+            if (isset($validated['search'])) {
+                $query->where('title', 'LIKE', '%' . $validated['search'] . '%');
+            }
+
+            if (isset($validated['due_from'])) {
+                $query->where('due_date', '>=', $validated['due_from']);
+            }
+
+            if (isset($validated['due_to'])) {
+                $query->where('due_date', '<=', $validated['due_to']);
+            }
+
+            $milestones = $query->paginate($perPage);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Marcos listados com sucesso!',
