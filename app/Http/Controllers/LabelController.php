@@ -13,9 +13,10 @@ class LabelController extends Controller
     {
         $validated = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:30'],
+            'search' => ['nullable', 'string'],
         ]);
 
-        $perPage = $validated['per_page'] ?? 30;
+        $perPage = $validated['per_page'] ?? 10;
 
         try {
             $project = Project::find($projectId);
@@ -27,7 +28,13 @@ class LabelController extends Controller
                 ], 404);
             }
 
-            $labels = $project->labels()->paginate($perPage);
+            $query = $project->labels();
+
+            if (isset($validated['search'])) {
+                $query->where('name', 'LIKE', '%' . $validated['search'] . '%');
+            }
+
+            $labels = $query->paginate($perPage);
 
             return response()->json([
                 'success' => true,
