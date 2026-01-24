@@ -22,7 +22,7 @@ class ProjectController extends Controller
 
         $perPage = $validate['per_page'] ?? 10;
         $orderBy = $validate['order_by'] ?? 'created_at';
-        $direction = $validate['direction'] ?? 'asc';
+        $direction = $validate['direction'] ?? 'desc';
 
         try {
             $query = Project::select([
@@ -43,11 +43,11 @@ class ProjectController extends Controller
             }
 
             if (isset($validate['deadline_from'])) {
-                $query->where('deadline', '>=', $validate['deadline_from']);
+                $query->whereDate('deadline', '>=', $validate['deadline_from']);
             }
 
             if (isset($validate['deadline_to'])) {
-                $query->where('deadline', '<=', $validate['deadline_to']);
+                $query->whereDate('deadline', '<=', $validate['deadline_to']);
             }
 
             $query->orderBy($orderBy, $direction);

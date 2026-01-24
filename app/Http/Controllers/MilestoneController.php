@@ -35,11 +35,11 @@ class MilestoneController extends Controller
             }
 
             if (isset($validated['due_from'])) {
-                $query->where('due_date', '>=', $validated['due_from']);
+                $query->whereDate('due_date', '>=', $validated['due_from']);
             }
 
             if (isset($validated['due_to'])) {
-                $query->where('due_date', '<=', $validated['due_to']);
+                $query->whereDate('due_date', '<=', $validated['due_to']);
             }
 
             $milestones = $query->paginate($perPage);
@@ -62,7 +62,7 @@ class MilestoneController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:120'],
-            'due_date' => ['required', 'date'],
+            'due_date' => ['nullable', 'date'],
         ]);
 
         try {
@@ -99,7 +99,7 @@ class MilestoneController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:120'],
-            'due_date' => ['required', 'date'],
+            'due_date' => ['nullable', 'date'],
         ]);
 
         try {

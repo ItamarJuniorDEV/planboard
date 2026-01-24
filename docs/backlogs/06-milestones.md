@@ -25,13 +25,13 @@ Como gestor de projetos, eu quero gerenciar marcos dentro de cada projeto para a
 - `id` — inteiro, auto increment, chave primária
 - `project_id` — inteiro, obrigatório, **chave estrangeira referenciando `projects.id`**
 - `title` — string, obrigatório, máximo 120 caracteres
-- `due_date` — date, obrigatório
+- `due_date` — date, opcional (nullable)
 - `created_at` e `updated_at` — timestamps padrão
 
 ### Validações no store e update
 
 - `title` — obrigatório, string, máximo 120
-- `due_date` — obrigatório, date
+- `due_date` — opcional (nullable), date
 
 ### Relacionamentos
 
