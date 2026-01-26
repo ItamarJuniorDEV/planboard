@@ -16,9 +16,14 @@ class ProjectController extends Controller
             'search' => ['nullable', 'string'],
             'deadline_from' => ['nullable', 'date'],
             'deadline_to' => ['nullable', 'date'],
+            'order_by' => ['nullable', 'string', 'in:created_at,title,deadline,budget'],
+            'direction' => ['nullable', 'string', 'in:asc,desc'],
         ]);
 
         $perPage = $validate['per_page'] ?? 10;
+        $orderBy = $validate['order_by'] ?? 'created_at';
+        $direction = $validate['direction'] ?? 'asc';
+
         try {
             $query = Project::select([
                 'id',
@@ -44,6 +49,8 @@ class ProjectController extends Controller
             if (isset($validate['deadline_to'])) {
                 $query->where('deadline', '<=', $validate['deadline_to']);
             }
+
+            $query->orderBy($orderBy, $direction);
 
             $projects = $query->paginate($perPage);
 
