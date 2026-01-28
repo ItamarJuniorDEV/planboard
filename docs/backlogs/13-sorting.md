@@ -63,7 +63,7 @@ Como usuário da API, eu quero ordenar os projetos por diferentes campos para vi
 
 - `GET /projects?order_by=deadline&direction=asc` → 200
 - `GET /projects?order_by=created_at&direction=desc` → 200
-- se `direction` não for enviado → padrão é `asc`
+- se `direction` não for enviado → padrão é `desc`
 - se `order_by` não for enviado → padrão é `created_at`
 
 ## Definição técnica do tech lead
@@ -78,7 +78,7 @@ Validações:
 
 - a ordenação funciona junto com os filtros já existentes
 - o `order_by` só aceita campos definidos explicitamente via `in:`
-- `direction` padrão é `asc`
+- `direction` padrão é `desc`
 - `order_by` padrão é `created_at`
 - a resposta continua paginada
 

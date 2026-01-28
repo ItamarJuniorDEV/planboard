@@ -27,7 +27,6 @@ Como gestor de projetos, eu quero gerenciar as tarefas vinculadas a cada projeto
 - `title` — string, obrigatório, máximo 255 caracteres
 - `description` — texto, opcional
 - `priority` — string, obrigatório, máximo 20 caracteres, default 'medium'
-- `completed` — boolean, obrigatório, default false
 - `created_at` e `updated_at` — timestamps padrão
 
 ### Validações no store e update
@@ -35,7 +34,6 @@ Como gestor de projetos, eu quero gerenciar as tarefas vinculadas a cada projeto
 - `title` — obrigatório, string, máximo 255
 - `description` — opcional, string
 - `priority` — obrigatório, string, máximo 20
-- `completed` — obrigatório, boolean
 
 ### Relacionamentos
 
