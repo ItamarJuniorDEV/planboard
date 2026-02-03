@@ -17,9 +17,15 @@ class TaskController extends Controller
             'priority' => ['nullable', 'string', 'in:low,medium,high,urgent'],
             'search' => ['nullable', 'string'],
             'status' => ['nullable', 'string', 'in:todo,doing,done'],
+            'order_by' => ['nullable', 'string', 'in:created_at,priority,status,title'],
+            'direction' => ['nullable', 'string', 'in:asc,desc'],
         ]);
 
+
         $perPage = $validate['per_page'] ?? 10;
+        $orderBy = $validate['order_by'] ?? 'created_at';
+        $direction = $validate['direction'] ?? 'asc';
+
 
         try {
             $project = Project::find($projectId);
@@ -53,6 +59,7 @@ class TaskController extends Controller
                 $query->where('status', $validate['status']);
             }
 
+            $query->orderBy($orderBy, $direction);
             $tasks = $query->paginate($perPage);
 
             return response()->json([

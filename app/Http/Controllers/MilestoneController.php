@@ -16,8 +16,11 @@ class MilestoneController extends Controller
             'search' => ['nullable', 'string'],
             'due_from' => ['nullable', 'date'],
             'due_to' => ['nullable', 'date'],
+            'order_by' => ['nullable', 'string', 'in:created_at,due_date,title'],
+            'direction' => ['nullable', 'string', 'in:asc,desc'],
         ]);
-
+        $orderBy = $validated['order_by'] ?? 'created_at';
+        $direction = $validated['direction'] ?? 'asc';
         $perPage = $validated['per_page'] ?? 20;
 
         try {
@@ -41,6 +44,8 @@ class MilestoneController extends Controller
             if (isset($validated['due_to'])) {
                 $query->whereDate('due_date', '<=', $validated['due_to']);
             }
+
+            $query->orderBy($orderBy, $direction);
 
             $milestones = $query->paginate($perPage);
 
