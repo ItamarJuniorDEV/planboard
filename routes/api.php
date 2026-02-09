@@ -52,6 +52,8 @@ Route::get('/projects/{projectId}/tasks/{taskId}/subtasks/{id}', [SubtaskControl
 Route::post('/projects/{projectId}/tasks/{taskId}/subtasks', [SubtaskController::class, 'store']);
 Route::put('/projects/{projectId}/tasks/{taskId}/subtasks/{id}', [SubtaskController::class, 'update']);
 Route::delete('/projects/{projectId}/tasks/{taskId}/subtasks/{id}', [SubtaskController::class, 'destroy']);
+Route::post('/projects/{projectId}/tasks/{taskId}/subtasks/bulk-complete', [SubtaskController::class, 'bulkComplete']);
+Route::post('/projects/{projectId}/tasks/{taskId}/subtasks/bulk-delete', [SubtaskController::class, 'bulkDelete']);
 
 // comments
 Route::get('/projects/{projectId}/tasks/{taskId}/comments', [CommentController::class, 'index']);
