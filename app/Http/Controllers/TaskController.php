@@ -330,10 +330,29 @@ class TaskController extends Controller
                 ], 404);
             }
 
-            $found = $project->tasks()->whereIn('id', $validate['task_ids'])->pluck('id')->toArray();
-            $notFound = array_values(array_diff($validate['task_ids'], $found));
+            $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
 
-            $project->tasks()->whereIn('id', $found)->update(['column_id' => $column->id]);
+            $foundIds = [];
+
+            foreach ($tasks as $task) {
+                $foundIds[] = $task->id;
+            }
+
+            $foundIdsMap = [];
+
+            foreach ($foundIds as $foundId) {
+                $foundIdsMap[$foundId] = true;
+            }
+
+            $notFound = [];
+
+            foreach ($validate['task_ids'] as $taskId) {
+                if (!isset($foundIdsMap[$taskId])) {
+                    $notFound[] = $taskId;
+                }
+            }
+
+            $project->tasks()->whereIn('id', $foundIds)->update(['column_id' => $column->id]);
 
             return response()->json([
                 'success' => true,
@@ -367,15 +386,34 @@ class TaskController extends Controller
                 ], 404);
             }
 
-            $found = $project->tasks()->whereIn('id', $validate['task_ids'])->pluck('id')->toArray();
-            $notFound = array_values(array_diff($validate['task_ids'], $found));
+            $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
 
-            $project->tasks()->whereIn('id', $found)->delete();
+            $foundIds = [];
+
+            foreach ($tasks as $task) {
+                $foundIds[] = $task->id;
+            }
+
+            $foundIdsMap = [];
+
+            foreach ($foundIds as $foundId) {
+                $foundIdsMap[$foundId] = true;
+            }
+
+            $notFound = [];
+
+            foreach ($validate['task_ids'] as $taskId) {
+                if (!isset($foundIdsMap[$taskId])) {
+                    $notFound[] = $taskId;
+                }
+            }
+
+            $project->tasks()->whereIn('id', $foundIds)->delete();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Operação concluída!',
-                'deleted' => count($found),
+                'deleted' => count($foundIds),
                 'not_found' => $notFound,
             ], 200);
         } catch (Throwable $e) {

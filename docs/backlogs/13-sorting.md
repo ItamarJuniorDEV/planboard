@@ -136,3 +136,118 @@ Validações:
 - definir os valores padrão quando não vierem na requisição
 - aplicar `orderBy` na query antes da paginação
 - manter os filtros já existentes funcionando junto com a ordenação
+
+# Backlog Item #13.4: Bulk Delete em Comments
+
+## Contexto de negócio
+
+Em tarefas com muitos comentários, o usuário pode querer excluir vários de uma vez sem precisar fazer uma requisição por comentário.
+
+## User Story
+
+Como usuário da API, eu quero deletar vários comentários ao mesmo tempo para ganhar produtividade.
+
+## Endpoint
+
+- `POST /projects/{projectId}/tasks/{taskId}/comments/bulk-delete`
+
+## Critérios de aceite
+
+- `POST /projects/{projectId}/tasks/{taskId}/comments/bulk-delete` → 200 ou 404
+
+## Body esperado
+
+```json
+{
+    "comment_ids": [1, 2, 3]
+}
+```
+
+## Definição técnica do tech lead
+
+### CommentController@bulkDelete
+
+Validações:
+- `comment_ids` — required, array, min:1
+- `comment_ids.*` — required, integer
+
+## Regras
+
+- verificar se o projeto existe
+- verificar se a task existe dentro do projeto
+- buscar todos os comments de uma vez com `whereIn`
+- calcular quais IDs não foram encontrados com `array_diff`
+- deletar todos os encontrados com um único `delete`
+
+## Resposta de sucesso (200)
+
+```json
+{
+    "success": true,
+    "message": "Operação concluída!",
+    "deleted": 2,
+    "not_found": [99]
+}
+```
+
+## O que deve ser feito
+
+- adicionar o método `bulkDelete` no `CommentController`
+- adicionar a rota no `api.php`
+
+# Backlog Item #13.5: Bulk Delete em Milestones
+
+## Contexto de negócio
+
+Ao reorganizar um projeto, o usuário pode querer excluir várias milestones obsoletas de uma vez.
+
+## User Story
+
+Como usuário da API, eu quero deletar várias milestones ao mesmo tempo para ganhar produtividade.
+
+## Endpoint
+
+- `POST /projects/{projectId}/milestones/bulk-delete`
+
+## Critérios de aceite
+
+- `POST /projects/{projectId}/milestones/bulk-delete` → 200 ou 404
+
+## Body esperado
+
+```json
+{
+    "milestone_ids": [1, 2, 3]
+}
+```
+
+## Definição técnica do tech lead
+
+### MilestoneController@bulkDelete
+
+Validações:
+- `milestone_ids` — required, array, min:1
+- `milestone_ids.*` — required, integer
+
+## Regras
+
+- verificar se o projeto existe
+- buscar todas as milestones de uma vez com `whereIn`
+- calcular quais IDs não foram encontrados com `array_diff`
+- deletar todas as encontradas com um único `delete`
+
+## Resposta de sucesso (200)
+
+```json
+{
+    "success": true,
+    "message": "Operação concluída!",
+    "deleted": 1,
+    "not_found": [99]
+}
+```
+
+## O que deve ser feito
+
+- adicionar o método `bulkDelete` no `MilestoneController`
+- adicionar a rota no `api.php`
