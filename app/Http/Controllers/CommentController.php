@@ -40,7 +40,6 @@ class CommentController extends Controller
                 'message' => 'Comentários listados com sucesso!',
                 'data' => $comments,
             ], 200);
-
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -85,7 +84,6 @@ class CommentController extends Controller
                 'message' => 'Comentário criado com sucesso!',
                 'data' => $comment,
             ], 201);
-
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -93,8 +91,8 @@ class CommentController extends Controller
                 'message' => 'Erro interno no servidor ao tentar adicionar comentário!',
             ], 500);
         }
-
     }
+
     public function show(int $projectId, int $taskId, int $id)
     {
         try {
@@ -127,7 +125,6 @@ class CommentController extends Controller
                 'message' => 'Comentário encontrado!',
                 'data' => $comment,
             ], 200);
-
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -136,6 +133,7 @@ class CommentController extends Controller
             ], 500);
         }
     }
+
     public function update(Request $request, int $projectId, int $taskId, int $id)
     {
         $validate = $request->validate([
@@ -167,6 +165,7 @@ class CommentController extends Controller
                     'message' => 'Comentário não encontrado!',
                 ], 404);
             }
+
             $comment->content = $validate['content'];
             $comment->author = $validate['author'];
             $comment->save();
@@ -184,6 +183,7 @@ class CommentController extends Controller
             ], 500);
         }
     }
+
     public function destroy(int $projectId, int $taskId, int $id)
     {
         try {
@@ -218,12 +218,73 @@ class CommentController extends Controller
                 'message' => 'Comentário excluído com sucesso!',
                 'data' => $comment,
             ], 200);
-
         } catch (Throwable $e) {
             report($e);
             return response()->json([
                 'success' => false,
                 'message' => 'Erro interno no servidor ao tentar excluir comentário!',
+            ], 500);
+        }
+    }
+
+    public function bulkDelete(Request $request, int $projectId, int $taskId)
+    {
+        $validated = $request->validate([
+            'comment_ids' => ['array', 'required', 'min:1'],
+            'comment_ids.*' => ['integer', 'required'],
+        ]);
+
+        try {
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Projeto não encontrado!',
+                ], 404);
+            }
+
+            $task = $project->tasks()->find($taskId);
+            if (!$task) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tarefa não encontrada!',
+                ], 404);
+            }
+
+            $comments = $task->comments()
+                ->whereIn('id', $validated['comment_ids'])
+                ->get();
+
+            $foundIds = [];
+            foreach ($comments as $comment) {
+                $foundIds[] = $comment->id;
+            }
+
+            $foundIdsMap = [];
+            foreach ($foundIds as $found) {
+                $foundIdsMap[$found] = true;
+            }
+
+            $notFound = [];
+            foreach ($validated['comment_ids'] as $commentId) {
+                if (!isset($foundIdsMap[$commentId])) {
+                    $notFound[] = $commentId;
+                }
+            }
+
+            $task->comments()->whereIn('id', $foundIds)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Operação concluída!',
+                'deleted' => count($foundIds),
+                'not_found' => $notFound,
+            ], 200);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno no servidor ao tentar excluir comentários!',
             ], 500);
         }
     }

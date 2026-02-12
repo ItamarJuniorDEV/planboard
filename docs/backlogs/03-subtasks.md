@@ -1,45 +1,24 @@
-# Backlog Item #3: CRUD de Subtarefas da Tarefa
+# #3 — CRUD de Subtasks
 
-## Contexto de negócio
+> Como gestor, eu quero quebrar tarefas grandes em subtarefas menores para facilitar o acompanhamento.
 
-O time percebeu que algumas tarefas são grandes demais e precisam ser quebradas em subtarefas menores. Exemplo: a tarefa "Criar layout do site" pode ter subtarefas como "Desenhar header", "Desenhar footer", "Escolher paleta de cores".
+## Endpoints
 
-## User Story
+- `GET /projects/{projectId}/tasks/{taskId}/subtasks` → 200 ou 404
+- `GET /projects/{projectId}/tasks/{taskId}/subtasks/{id}` → 200 ou 404
+- `POST /projects/{projectId}/tasks/{taskId}/subtasks` → 201 ou 404
+- `PUT /projects/{projectId}/tasks/{taskId}/subtasks/{id}` → 200 ou 404
+- `DELETE /projects/{projectId}/tasks/{taskId}/subtasks/{id}` → 200 ou 404
 
-Como gestor de projetos, eu quero gerenciar subtarefas dentro de cada tarefa para quebrar entregas grandes em pedaços menores.
+## Schema
+
+| Campo | Tipo | Regras |
+|---|---|---|
+| task_id | FK | referencia tasks.id, cascade delete |
+| title | string | obrigatório, máx 255 |
+| done | boolean | obrigatório, default false |
 
 ## Critérios de aceite
 
-| Endpoint | Método | Status |
-|---|---|---|
-| `GET /projects/{projectId}/tasks/{taskId}/subtasks` | index | 200 ou 404 |
-| `GET /projects/{projectId}/tasks/{taskId}/subtasks/{id}` | show | 200 ou 404 |
-| `POST /projects/{projectId}/tasks/{taskId}/subtasks` | store | 201 ou 404 |
-| `PUT /projects/{projectId}/tasks/{taskId}/subtasks/{id}` | update | 200 ou 404 |
-| `DELETE /projects/{projectId}/tasks/{taskId}/subtasks/{id}` | destroy | 200 ou 404 |
-
-## Definição técnica do tech lead
-
-### Tabela `subtasks`
-
-- `id` — inteiro, auto increment, chave primária
-- `task_id` — inteiro, obrigatório, **chave estrangeira referenciando `tasks.id`**
-- `title` — string, obrigatório, máximo 255 caracteres
-- `done` — boolean, obrigatório, default false
-- `created_at` e `updated_at` — timestamps padrão
-
-### Validações no store e update
-
-- `title` — obrigatório, string, máximo 255
-- `done` — obrigatório, boolean
-
-### Relacionamentos
-
-- No Model `Subtask`: uma subtask **pertence a** uma task (`belongsTo`)
-- No Model `Task`: uma task **tem muitas** subtasks (`hasMany`)
-
-### Observação
-
-O `task_id` vem pela URL, não pelo body.
-
-**IMPORTANTE:** mesmo a subtask sendo filha da task, tu precisa validar a **cadeia inteira**: o projeto existe? A task existe DENTRO desse projeto? Só depois mexe na subtask.
+- validar a cadeia completa: projeto existe → task pertence ao projeto → subtask pertence à task
+- `task_id` vem pela URL, não pelo body

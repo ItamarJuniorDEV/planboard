@@ -61,6 +61,7 @@ Route::get('/projects/{projectId}/tasks/{taskId}/comments/{id}', [CommentControl
 Route::post('/projects/{projectId}/tasks/{taskId}/comments', [CommentController::class, 'store']);
 Route::put('/projects/{projectId}/tasks/{taskId}/comments/{id}', [CommentController::class, 'update']);
 Route::delete('/projects/{projectId}/tasks/{taskId}/comments/{id}', [CommentController::class, 'destroy']);
+Route::post('/projects/{projectId}/tasks/{taskId}/comments/bulk-delete', [CommentController::class, 'bulkDelete']);
 
 // marco
 Route::get('/projects/{projectId}/milestones', [MilestoneController::class, 'index']);

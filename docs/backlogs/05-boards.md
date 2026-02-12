@@ -1,43 +1,24 @@
-# Backlog Item #5: CRUD de Boards (Quadros)
+# #5 — CRUD de Boards
 
-## Contexto de negócio
+> Como gestor, eu quero organizar o trabalho de cada projeto em quadros (sprints/fases).
 
-O time precisa organizar as tarefas de cada projeto em quadros, tipo sprints. Exemplo: o projeto "Loja Virtual" pode ter os boards "Sprint 1", "Sprint 2", "Backlog".
+## Endpoints
 
-## User Story
+- `GET /projects/{projectId}/boards` → 200 ou 404
+- `GET /projects/{projectId}/boards/{id}` → 200 ou 404
+- `POST /projects/{projectId}/boards` → 201 ou 404
+- `PUT /projects/{projectId}/boards/{id}` → 200 ou 404
+- `DELETE /projects/{projectId}/boards/{id}` → 200 ou 404
 
-Como gestor de projetos, eu quero gerenciar quadros dentro de cada projeto para organizar o trabalho em sprints ou fases.
+## Schema
+
+| Campo | Tipo | Regras |
+|---|---|---|
+| project_id | FK | referencia projects.id, cascade delete |
+| name | string | obrigatório, máx 100 |
+| status | string | obrigatório, máx 20, default 'active' |
 
 ## Critérios de aceite
 
-| Endpoint | Método | Status |
-|---|---|---|
-| `GET /projects/{projectId}/boards` | index | 200 ou 404 |
-| `GET /projects/{projectId}/boards/{id}` | show | 200 ou 404 |
-| `POST /projects/{projectId}/boards` | store | 201 ou 404 |
-| `PUT /projects/{projectId}/boards/{id}` | update | 200 ou 404 |
-| `DELETE /projects/{projectId}/boards/{id}` | destroy | 200 ou 404 |
-
-## Definição técnica do tech lead
-
-### Tabela `boards`
-
-- `id` — inteiro, auto increment, chave primária
-- `project_id` — inteiro, obrigatório, **chave estrangeira referenciando `projects.id`**
-- `name` — string, obrigatório, máximo 100 caracteres
-- `status` — string, obrigatório, máximo 20 caracteres, default 'active'
-- `created_at` e `updated_at` — timestamps padrão
-
-### Validações no store e update
-
-- `name` — obrigatório, string, máximo 100
-- `status` — obrigatório, string, máximo 20
-
-### Relacionamentos
-
-- No Model `Board`: um board **pertence a** um project (`belongsTo`)
-- No Model `Project`: um project **tem muitos** boards (`hasMany`)
-
-### Observação
-
-O `project_id` vem pela URL, não pelo body.
+- validar se o projeto existe antes de qualquer operação
+- `project_id` vem pela URL, não pelo body

@@ -1,43 +1,24 @@
-# Backlog Item #8: CRUD de Labels (Etiquetas)
+# #8 — CRUD de Labels
 
-## Contexto de negócio
+> Como usuário, eu quero categorizar itens do projeto com etiquetas coloridas.
 
-O time precisa categorizar tarefas e itens dentro de cada projeto usando etiquetas coloridas. Exemplo: "bug" (vermelho), "feature" (verde), "urgente" (laranja).
+## Endpoints
 
-## User Story
+- `GET /projects/{projectId}/labels` → 200 ou 404
+- `GET /projects/{projectId}/labels/{id}` → 200 ou 404
+- `POST /projects/{projectId}/labels` → 201 ou 404
+- `PUT /projects/{projectId}/labels/{id}` → 200 ou 404
+- `DELETE /projects/{projectId}/labels/{id}` → 200 ou 404
 
-Como usuário da API, eu quero gerenciar as etiquetas de um projeto.
+## Schema
+
+| Campo | Tipo | Regras |
+|---|---|---|
+| project_id | FK | referencia projects.id, cascade delete |
+| name | string | obrigatório, máx 50 |
+| color | string | obrigatório, máx 30 |
 
 ## Critérios de aceite
 
-| Endpoint | Método | Status |
-|---|---|---|
-| `GET /projects/{projectId}/labels` | index | 200 ou 404 |
-| `GET /projects/{projectId}/labels/{id}` | show | 200 ou 404 |
-| `POST /projects/{projectId}/labels` | store | 201 ou 404 |
-| `PUT /projects/{projectId}/labels/{id}` | update | 200 ou 404 |
-| `DELETE /projects/{projectId}/labels/{id}` | destroy | 200 ou 404 |
-
-## Definição técnica do tech lead
-
-### Tabela `labels`
-
-- `id` — inteiro, auto increment, chave primária
-- `project_id` — inteiro, obrigatório, **chave estrangeira referenciando `projects.id`**
-- `name` — string, obrigatório, máximo 50 caracteres
-- `color` — string, obrigatório, máximo 30 caracteres
-- `created_at` e `updated_at` — timestamps padrão
-
-### Validações no store e update
-
-- `name` — obrigatório, string, máximo 50
-- `color` — obrigatório, string, máximo 30
-
-### Relacionamentos
-
-- No Model `Label`: uma label **pertence a** um project (`belongsTo`)
-- No Model `Project`: um project **tem muitas** labels (`hasMany`)
-
-### Observação
-
-O `project_id` vem pela URL, não pelo body.
+- validar se o projeto existe antes de qualquer operação
+- `project_id` vem pela URL, não pelo body

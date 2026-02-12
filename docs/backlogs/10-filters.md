@@ -1,74 +1,38 @@
-# Backlog Item #10: Filtros e Busca nas Tasks
+# #10 — Filtros em Tasks e Projects
 
-## User Story
+## #10.1 — Filtros em Tasks
 
-Como usuário da API, eu quero filtrar e buscar tarefas para encontrar mais rápido o que preciso.
+> Como usuário, eu quero filtrar e buscar tarefas para encontrar o que preciso rapidamente.
 
-## Critérios de aceite
+### Endpoint
 
-- GET `/projects/{projectId}/tasks?status=doing` → 200
-- GET `/projects/{projectId}/tasks?priority=high` → 200
-- GET `/projects/{projectId}/tasks?status=doing&priority=high` → 200
-- GET `/projects/{projectId}/tasks?search=login` → 200
+- `GET /projects/{projectId}/tasks` → 200
 
-## Campos de filtro
+### Parâmetros aceitos
 
-- `status` — opcional, string, in:todo,doing,done
-- `priority` — opcional, string, in:low,medium,high,urgent
-- `search` — opcional, string
-- `per_page` — opcional, inteiro, mínimo 1, máximo 50
-
-## Regras
-
-- os filtros devem funcionar juntos
-- a busca pode ser feita no título da task
-- a resposta continua paginada
-
-## Validações
-
-- `status` — nullable, string, in:todo,doing,done
-- `priority` — nullable, string, in:low,medium,high,urgent
-- `search` — nullable, string
-- `per_page` — nullable, integer, min:1, max:50
-
-## Observação
-
-- isso fica no `index()` do `TaskController`
+| Parâmetro | Tipo | Valores |
+|---|---|---|
+| status | string | todo, doing, done |
+| priority | string | low, medium, high, urgent |
+| search | string | busca no título |
+| per_page | integer | mín 1, máx 50 |
 
 ---
 
-# Backlog Item #10.1: Filtros e Busca nos Projects
+## #10.2 — Filtros em Projects
 
-## User Story
+> Como usuário, eu quero filtrar e buscar projetos para encontrar o que preciso rapidamente.
 
-Como usuário da API, eu quero filtrar e buscar projetos para encontrar mais rápido o que preciso.
+### Endpoint
 
-## Critérios de aceite
+- `GET /projects` → 200
 
-- GET `/projects?status=active` → 200
-- GET `/projects?search=admin` → 200
-- GET `/projects?deadline_from=2025-06-01` → 200
-- GET `/projects?deadline_to=2025-09-30` → 200
-- GET `/projects?deadline_from=2025-06-01&deadline_to=2025-09-30` → 200
-- GET `/projects?status=active&search=app` → 200
+### Parâmetros aceitos
 
-## Campos de filtro
-
-- `status` — opcional, string, in:draft,planning,active,on_hold,completed,cancelled
-- `search` — opcional, string
-- `deadline_from` — opcional, date
-- `deadline_to` — opcional, date
-- `per_page` — opcional, inteiro, mínimo 1, máximo 50
-
-## Regras
-
-- os filtros devem funcionar juntos
-- a busca pode ser feita no título do projeto
-- `deadline_from` filtra projetos com deadline >= a data informada
-- `deadline_to` filtra projetos com deadline <= a data informada
-- a resposta continua paginada
-
-## Observação
-
-- isso fica no `index()` do `ProjectController`
-- filtro com datas usa operadores `>=` e `<=` no where
+| Parâmetro | Tipo | Valores |
+|---|---|---|
+| status | string | draft, planning, active, on_hold, completed, cancelled |
+| search | string | busca no título |
+| deadline_from | date | projetos com deadline >= data |
+| deadline_to | date | projetos com deadline <= data |
+| per_page | integer | mín 1, máx 50 |
