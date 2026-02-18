@@ -338,16 +338,10 @@ class TaskController extends Controller
                 $foundIds[] = $task->id;
             }
 
-            $foundIdsMap = [];
-
-            foreach ($foundIds as $foundId) {
-                $foundIdsMap[$foundId] = true;
-            }
-
             $notFound = [];
 
             foreach ($validate['task_ids'] as $taskId) {
-                if (!isset($foundIdsMap[$taskId])) {
+                if (!in_array($taskId, $foundIds)) {
                     $notFound[] = $taskId;
                 }
             }
@@ -394,16 +388,10 @@ class TaskController extends Controller
                 $foundIds[] = $task->id;
             }
 
-            $foundIdsMap = [];
-
-            foreach ($foundIds as $foundId) {
-                $foundIdsMap[$foundId] = true;
-            }
-
             $notFound = [];
 
             foreach ($validate['task_ids'] as $taskId) {
-                if (!isset($foundIdsMap[$taskId])) {
+                if (!in_array($taskId, $foundIds)) {
                     $notFound[] = $taskId;
                 }
             }

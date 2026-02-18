@@ -284,16 +284,10 @@ class SubtaskController extends Controller
                 $foundIds[] = $subtask->id;
             }
 
-            $foundIdsMap = [];
-
-            foreach ($foundIds as $foundId) {
-                $foundIdsMap[$foundId] = true;
-            }
-
             $notFound = [];
 
             foreach ($subtaskIds as $subtaskId) {
-                if (!isset($foundIdsMap[$subtaskId])) {
+                if (!in_array($subtaskId, $foundIds)) {
                     $notFound[] = $subtaskId;
                 }
             }
@@ -362,16 +356,10 @@ class SubtaskController extends Controller
                 $foundIds[] = $subtask->id;
             }
 
-            $foundIdsMap = [];
-
-            foreach ($foundIds as $foundId) {
-                $foundIdsMap[$foundId] = true;
-            }
-
             $notFound = [];
 
             foreach ($subtaskIds as $subtaskId) {
-                if (!isset($foundIdsMap[$subtaskId])) {
+                if (!in_array($subtaskId, $foundIds)) {
                     $notFound[] = $subtaskId;
                 }
             }

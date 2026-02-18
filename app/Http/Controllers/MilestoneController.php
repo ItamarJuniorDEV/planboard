@@ -215,4 +215,53 @@ class MilestoneController extends Controller
             ], 500);
         }
     }
+
+    public function bulkDelete(Request $request, int $projectId)
+    {
+        $validated = $request->validate([
+            'milestone_ids' => ['array', 'required', 'min:1'],
+            'milestone_ids.*' => ['integer', 'required'],
+        ]);
+
+        try {
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Projeto não encontrado!',
+                ], 404);
+            }
+
+            $milestones = $project->milestones()
+                ->whereIn('id', $validated['milestone_ids'])
+                ->get();
+
+            $foundIds = [];
+            foreach ($milestones as $milestone) {
+                $foundIds[] = $milestone->id;
+            }
+
+            $notFound = [];
+            foreach ($validated['milestone_ids'] as $milestoneId) {
+                if (!in_array($milestoneId, $foundIds)) {
+                    $notFound[] = $milestoneId;
+                }
+            }
+
+            $project->milestones()->whereIn('id', $foundIds)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Operação concluída!',
+                'deleted' => count($foundIds),
+                'not_found' => $notFound,
+            ], 200);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno no servidor ao tentar excluir marcos!',
+            ], 500);
+        }
+    }
 }
