@@ -21,6 +21,7 @@ Route::get('/projects/{id}', [ProjectController::class, 'show']);
 Route::post('/projects', [ProjectController::class, 'store']);
 Route::put('/projects/{id}', [ProjectController::class, 'update']);
 Route::delete('/projects/{id}', [ProjectController::class, 'destroy']);
+Route::get('/projects/{projectId}/stats', [ProjectController::class, 'stats']);
 
 // boards
 Route::get('/projects/{projectId}/boards', [BoardController::class, 'index']);

@@ -198,4 +198,66 @@ class ProjectController extends Controller
             ], 500);
         }
     }
+
+    public function stats(int $projectId)
+    {
+        try {
+            $project = Project::find($projectId);
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Projeto não encontrado!',
+                ], 404);
+            }
+
+            $tasksByStatus = $project->tasks()
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')
+                ->get();
+
+            $tasksByPriority = $project->tasks()
+                ->selectRaw('priority, count(*) as total')
+                ->groupBy('priority')
+                ->get();
+
+            $subtasks = $project->tasks()
+                ->withCount([
+                    'subtasks',
+                    'subtasks as subtasks_done_count' => fn ($q) => $q->where('done', true),
+                ])
+                ->get();
+
+            $totalSubtasks = $subtasks->sum('subtasks_count');
+            $doneSubtasks  = $subtasks->sum('subtasks_done_count');
+
+            $totalMilestones   = $project->milestones()->count();
+            $overdueMilestones = $project->milestones()
+                ->whereDate('due_date', '<', now())
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'tasks' => [
+                    'by_status'   => $tasksByStatus,
+                    'by_priority' => $tasksByPriority,
+                ],
+                'subtasks' => [
+                    'total'   => $totalSubtasks,
+                    'done'    => $doneSubtasks,
+                    'pending' => $totalSubtasks - $doneSubtasks,
+                ],
+                'milestones' => [
+                    'total'   => $totalMilestones,
+                    'overdue' => $overdueMilestones,
+                ],
+            ], 200);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno no servidor!',
+            ], 500);
+        }
+    }
 }
