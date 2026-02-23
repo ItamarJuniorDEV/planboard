@@ -10,6 +10,7 @@ use App\Http\Controllers\SubtaskController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\MilestoneController;
 use App\Http\Controllers\LabelController;
+use App\Http\Controllers\UserController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -77,3 +78,10 @@ Route::get('/projects/{projectId}/labels/{id}', [LabelController::class, 'show']
 Route::post('/projects/{projectId}/labels', [LabelController::class, 'store']);
 Route::put('/projects/{projectId}/labels/{id}', [LabelController::class, 'update']);
 Route::delete('/projects/{projectId}/labels/{id}', [LabelController::class, 'destroy']);
+
+// usuários
+Route::get('/users', [UserController::class, 'index']);
+Route::get('/users/{id}', [UserController::class, 'show']);
+Route::post('/users', [UserController::class, 'store']);
+Route::put('/users/{id}', [UserController::class, 'update']);
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
