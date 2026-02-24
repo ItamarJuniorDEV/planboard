@@ -62,8 +62,36 @@ class UserController extends Controller
         }
     }
 
-    public function store(Request $request, )
+    public function store(Request $request)
     {
+        $validated = $request->validate([
+            'name' => ['string', 'required', 'max:255'],
+            'email' => ['string', 'required', 'email', 'unique:users,email'],
+            'password' => ['string', 'required', 'min:8'],
+            'role' => ['string', 'nullable', 'in:admin,member'],
+        ]);
 
+        try {
+            $user = new User();
+            $user->name = $validated['name'];
+            $user->email = $validated['email'];
+            $user->password = $validated['password'];
+            $user->role = $validated['role'] ?? 'member';
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário criado com sucesso!',
+                'data' => $user,
+            ], 201);
+
+        } catch (Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno no servidor ao tentar criar usuário!',
+            ], 500);
+        }
     }
 }
