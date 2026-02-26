@@ -94,4 +94,73 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    public function update(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'name' => ['string', 'required', 'max:255'],
+            'email' => ['string', 'required','email', 'unique:users,email,' . $id],
+            'password' => ['string', 'nullable', 'min:8'],
+            'role' => ['string', 'nullable', 'in:admin,member'],
+        ]);
+
+        try {
+            $user = User::find($id);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuário não encontrado!',
+                ], 404);
+            }
+
+            $user->name = $validated['name'];
+            $user->email = $validated['email'];
+            $user->role = $validated['role'] ?? $user->role;
+
+            if (isset($validated['password'])) {
+                $user->password = $validated['password'];
+            }
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário atualizado com sucesso!',
+                'data' => $user,
+            ], 200);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno no servidor ao tentar editar usuário!',
+            ], 500);
+        }
+    }
+
+    public function destroy(int $id)
+    {
+        try {
+            $user = User::find($id);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuário não encontrado!',
+                ], 404);
+            }
+
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário excluído com sucesso!',
+                'data' => $user,
+
+            ], 200);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno no servidor ao tentar excluir usuário!',
+            ], 500);
+        }
+    }
 }
