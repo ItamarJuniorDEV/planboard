@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Throwable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -75,7 +76,7 @@ class UserController extends Controller
             $user = new User();
             $user->name = $validated['name'];
             $user->email = $validated['email'];
-            $user->password = $validated['password'];
+            $user->password = Hash::make($validated['password']);
             $user->role = $validated['role'] ?? 'member';
             $user->save();
 
@@ -118,7 +119,7 @@ class UserController extends Controller
             $user->role = $validated['role'] ?? $user->role;
 
             if (isset($validated['password'])) {
-                $user->password = $validated['password'];
+                $user->password = Hash::make($validated['password']);
             }
             $user->save();
 

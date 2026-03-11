@@ -351,7 +351,7 @@ class TaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Operação concluída!',
-                'moved' => count($found),
+                'moved' => count($foundIds),
                 'not_found' => $notFound,
             ], 200);
         } catch (Throwable $e) {
