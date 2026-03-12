@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Subtask extends Model
 {
     protected $fillable = [
+        'user_id',
         'task_id',
         'title',
         'done',

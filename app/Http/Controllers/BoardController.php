@@ -111,6 +111,7 @@ class BoardController extends Controller
 
             $board = new Board();
             $board->project_id = $project->id;
+            $board->user_id = $request->user()->id;
             $board->name = $validate['name'];
             $board->status = $validate['status'];
             $board->save();
@@ -156,6 +157,13 @@ class BoardController extends Controller
                 ], 404);
             }
 
+            if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
+            }
+
             $board->name = $validate['name'];
             $board->status = $validate['status'];
             $board->save();
@@ -194,6 +202,13 @@ class BoardController extends Controller
                     'success' => false,
                     'message' => 'Quadro não encontrado!',
                 ], 404);
+            }
+
+            if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $board->delete();

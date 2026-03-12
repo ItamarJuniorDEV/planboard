@@ -126,6 +126,7 @@ class SubtaskController extends Controller
 
             $subtask = new Subtask();
             $subtask->task_id = $task->id;
+            $subtask->user_id = $request->user()->id;
             $subtask->title = $validate['title'];
             $subtask->done = $validate['done'];
             $subtask->save();
@@ -180,6 +181,13 @@ class SubtaskController extends Controller
                 ], 404);
             }
 
+            if ($subtask->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
+            }
+
             $subtask->title = $validate['title'];
             $subtask->done = $validate['done'];
             $subtask->save();
@@ -227,6 +235,13 @@ class SubtaskController extends Controller
                     'success' => false,
                     'message' => 'Subtarefa não encontrada!',
                 ], 404);
+            }
+
+            if ($subtask->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $subtask->delete();

@@ -124,6 +124,7 @@ class ColumnController extends Controller
 
             $column = new Column();
             $column->board_id = $board->id;
+            $column->user_id = $request->user()->id;
             $column->name = $validated['name'];
             $column->position = $validated['position'];
             $column->save();
@@ -177,6 +178,13 @@ class ColumnController extends Controller
                 ], 404);
             }
 
+            if ($column->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
+            }
+
             $column->name = $validated['name'];
             $column->position = $validated['position'];
             $column->save();
@@ -195,7 +203,7 @@ class ColumnController extends Controller
         }
     }
 
-    public function destroy(int $projectId, int $boardId, int $id)
+    public function destroy(Request $request, int $projectId, int $boardId, int $id)
     {
         try {
             $project = Project::find($projectId);
@@ -223,6 +231,13 @@ class ColumnController extends Controller
                     'success' => false,
                     'message' => 'Coluna não encontrada!',
                 ], 404);
+            }
+
+            if ($column->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $deletedColumn = $column;

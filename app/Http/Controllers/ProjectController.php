@@ -113,6 +113,7 @@ class ProjectController extends Controller
             $project->budget = $validate['budget'];
             $project->status = $validate['status'];
             $project->deadline = $validate['deadline'] ?? null;
+            $project->user_id = $request->user()->id;
             $project->save();
 
             return response()->json([
@@ -149,6 +150,13 @@ class ProjectController extends Controller
                 ], 404);
             }
 
+            if ($project->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
+            }
+
             $project->title = $validate['title'];
             $project->description = $validate['description'] ?? null;
             $project->budget = $validate['budget'];
@@ -170,7 +178,7 @@ class ProjectController extends Controller
         }
     }
 
-    public function destroy(int $id)
+    public function destroy(Request $request, int $id)
     {
         try {
             $project = Project::find($id);
@@ -180,6 +188,13 @@ class ProjectController extends Controller
                     'success' => false,
                     'message' => 'Projeto não encontrado!',
                 ], 404);
+            }
+
+            if ($project->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $deletedProject = $project;

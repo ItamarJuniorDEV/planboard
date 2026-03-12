@@ -104,6 +104,7 @@ class LabelController extends Controller
 
             $label = new Label();
             $label->project_id = $project->id;
+            $label->user_id = $request->user()->id;
             $label->name = $validated['name'];
             $label->color = $validated['color'];
             $label->save();
@@ -148,6 +149,13 @@ class LabelController extends Controller
                 ], 404);
             }
 
+            if ($label->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
+            }
+
             $label->name = $validated['name'];
             $label->color = $validated['color'];
             $label->save();
@@ -166,7 +174,7 @@ class LabelController extends Controller
         }
     }
 
-    public function destroy(int $projectId, int $id)
+    public function destroy(Request $request, int $projectId, int $id)
     {
         try {
             $project = Project::find($projectId);
@@ -185,6 +193,13 @@ class LabelController extends Controller
                     'success' => false,
                     'message' => 'Etiqueta não encontrada!',
                 ], 404);
+            }
+
+            if ($label->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $label->delete();

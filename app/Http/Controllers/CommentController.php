@@ -75,6 +75,7 @@ class CommentController extends Controller
 
             $comment = new Comment();
             $comment->task_id = $task->id;
+            $comment->user_id = $request->user()->id;
             $comment->content = $validate['content'];
             $comment->author = $validate['author'];
             $comment->save();
@@ -166,6 +167,13 @@ class CommentController extends Controller
                 ], 404);
             }
 
+            if ($comment->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
+            }
+
             $comment->content = $validate['content'];
             $comment->author = $validate['author'];
             $comment->save();
@@ -184,7 +192,7 @@ class CommentController extends Controller
         }
     }
 
-    public function destroy(int $projectId, int $taskId, int $id)
+    public function destroy(Request $request, int $projectId, int $taskId, int $id)
     {
         try {
             $project = Project::find($projectId);
@@ -209,6 +217,13 @@ class CommentController extends Controller
                     'success' => false,
                     'message' => 'Comentário não encontrado!',
                 ], 404);
+            }
+
+            if ($comment->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $comment->delete();

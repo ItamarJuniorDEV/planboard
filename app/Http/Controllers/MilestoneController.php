@@ -82,6 +82,7 @@ class MilestoneController extends Controller
 
             $milestone = new Milestone();
             $milestone->project_id = $project->id;
+            $milestone->user_id = $request->user()->id;
             $milestone->title = $validated['title'];
             $milestone->due_date = $validated['due_date'];
             $milestone->save();
@@ -124,6 +125,13 @@ class MilestoneController extends Controller
                     'success' => false,
                     'message' => 'Marco não encontrado!',
                 ], 404);
+            }
+
+            if ($milestone->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $milestone->title = $validated['title'];
@@ -179,7 +187,7 @@ class MilestoneController extends Controller
         }
     }
 
-    public function destroy(int $projectId, int $id)
+    public function destroy(Request $request, int $projectId, int $id)
     {
         try {
             $project = Project::find($projectId);
@@ -198,6 +206,13 @@ class MilestoneController extends Controller
                     'success' => false,
                     'message' => 'Marco não encontrado!',
                 ], 404);
+            }
+
+            if ($milestone->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $milestone->delete();

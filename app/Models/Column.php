@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Column extends Model
 {
     protected $fillable = [
+        'user_id',
         'board_id',
         'name',
         'position',

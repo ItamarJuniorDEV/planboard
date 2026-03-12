@@ -132,6 +132,7 @@ class TaskController extends Controller
 
             $task = new Task();
             $task->project_id = $project->id;
+            $task->user_id = $request->user()->id;
             $task->title = $validate['title'];
             $task->description = $validate['description'] ?? null;
             $task->priority = $validate['priority'];
@@ -180,6 +181,13 @@ class TaskController extends Controller
                 ], 404);
             }
 
+            if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
+            }
+
             $task->title = $validate['title'];
             $task->description = $validate['description'] ?? null;
             $task->priority = $validate['priority'];
@@ -200,7 +208,7 @@ class TaskController extends Controller
         }
     }
 
-    public function destroy(int $projectId, int $id)
+    public function destroy(Request $request, int $projectId, int $id)
     {
         try {
             $project = Project::find($projectId);
@@ -219,6 +227,13 @@ class TaskController extends Controller
                     'success' => false,
                     'message' => 'Tarefa não encontrada!',
                 ], 404);
+            }
+
+            if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ação não autorizada!',
+                ], 403);
             }
 
             $deletedTask = $task;
