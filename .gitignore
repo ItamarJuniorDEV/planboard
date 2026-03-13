@@ -26,3 +26,4 @@ mysql_data/
 /docker-compose.yml
 docs/ajustes.txt
 /padroes
+.claude
