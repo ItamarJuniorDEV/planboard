@@ -1,59 +1,168 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Planboard API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API RESTful para gerenciamento de projetos com quadros kanban.
 
-## About Laravel
+A ideia era ter um backend completo pra organizar projetos em equipe — com autenticação, controle de papel, autorização por dono do recurso e operações em lote. O projeto serviu pra explorar esses padrões de forma mais próxima de como aparecem em sistemas reais.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Funcionalidades
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Autenticação por token com Laravel Sanctum
+- CRUD completo de projetos, quadros, colunas, tarefas, subtarefas, comentários, marcos e etiquetas
+- Suporte a kanban: mover tarefas entre colunas, mover e excluir em lote
+- Autorização por dono do recurso — só o criador ou um admin pode editar/deletar
+- Controle de acesso por papel (admin / member)
+- Filtros, busca e paginação nos endpoints de listagem
+- Estatísticas do projeto: tarefas por status/prioridade, progresso de subtarefas e marcos em atraso
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Tecnologias
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP 8.3 / Laravel 12
+- MySQL
+- Laravel Sanctum (autenticação)
+- PHPUnit (testes)
+- Docker
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Instalação
 
-### Premium Partners
+**Pré-requisitos:** PHP 8.3+, Composer, MySQL
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+git clone https://github.com/ItamarJuniorDEV/planboard-api.git
+cd planboard-api
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate
+```
 
-## Contributing
+## Rodando
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan serve
+```
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Autenticação
 
-## Security Vulnerabilities
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/login` | Login e geração de token |
+| POST | `/api/logout` | Revogar token |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Todos os outros endpoints exigem o header `Authorization: Bearer {token}`.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Endpoints
+
+### Projetos
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/projects` | Listar projetos |
+| GET | `/api/projects/{id}` | Buscar projeto |
+| POST | `/api/projects` | Criar projeto |
+| PUT | `/api/projects/{id}` | Atualizar projeto |
+| DELETE | `/api/projects/{id}` | Deletar projeto |
+| GET | `/api/projects/{id}/stats` | Estatísticas do projeto |
+
+### Quadros
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/projects/{projectId}/boards` | Listar quadros |
+| POST | `/api/projects/{projectId}/boards` | Criar quadro |
+| PUT | `/api/projects/{projectId}/boards/{id}` | Atualizar quadro |
+| DELETE | `/api/projects/{projectId}/boards/{id}` | Deletar quadro |
+
+### Colunas
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/projects/{projectId}/boards/{boardId}/columns` | Listar colunas |
+| POST | `/api/projects/{projectId}/boards/{boardId}/columns` | Criar coluna |
+| PUT | `/api/projects/{projectId}/boards/{boardId}/columns/{id}` | Atualizar coluna |
+| DELETE | `/api/projects/{projectId}/boards/{boardId}/columns/{id}` | Deletar coluna |
+
+### Tarefas
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/projects/{projectId}/tasks` | Listar tarefas |
+| POST | `/api/projects/{projectId}/tasks` | Criar tarefa |
+| PUT | `/api/projects/{projectId}/tasks/{id}` | Atualizar tarefa |
+| DELETE | `/api/projects/{projectId}/tasks/{id}` | Deletar tarefa |
+| PATCH | `/api/projects/{projectId}/boards/{boardId}/columns/{columnId}/tasks/{taskId}/move` | Mover tarefa para coluna |
+| PATCH | `/api/projects/{projectId}/tasks/bulk-move` | Mover tarefas em lote |
+| POST | `/api/projects/{projectId}/tasks/bulk-delete` | Deletar tarefas em lote |
+
+### Subtarefas
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/projects/{projectId}/tasks/{taskId}/subtasks` | Listar subtarefas |
+| POST | `/api/projects/{projectId}/tasks/{taskId}/subtasks` | Criar subtarefa |
+| PUT | `/api/projects/{projectId}/tasks/{taskId}/subtasks/{id}` | Atualizar subtarefa |
+| DELETE | `/api/projects/{projectId}/tasks/{taskId}/subtasks/{id}` | Deletar subtarefa |
+| POST | `/api/projects/{projectId}/tasks/{taskId}/subtasks/bulk-complete` | Concluir em lote |
+| POST | `/api/projects/{projectId}/tasks/{taskId}/subtasks/bulk-delete` | Deletar em lote |
+
+### Comentários
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/projects/{projectId}/tasks/{taskId}/comments` | Listar comentários |
+| POST | `/api/projects/{projectId}/tasks/{taskId}/comments` | Criar comentário |
+| PUT | `/api/projects/{projectId}/tasks/{taskId}/comments/{id}` | Atualizar comentário |
+| DELETE | `/api/projects/{projectId}/tasks/{taskId}/comments/{id}` | Deletar comentário |
+
+### Marcos
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/projects/{projectId}/milestones` | Listar marcos |
+| POST | `/api/projects/{projectId}/milestones` | Criar marco |
+| PUT | `/api/projects/{projectId}/milestones/{id}` | Atualizar marco |
+| DELETE | `/api/projects/{projectId}/milestones/{id}` | Deletar marco |
+
+### Etiquetas
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/projects/{projectId}/labels` | Listar etiquetas |
+| POST | `/api/projects/{projectId}/labels` | Criar etiqueta |
+| PUT | `/api/projects/{projectId}/labels/{id}` | Atualizar etiqueta |
+| DELETE | `/api/projects/{projectId}/labels/{id}` | Deletar etiqueta |
+
+### Usuários *(somente admin)*
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/users` | Listar usuários |
+| GET | `/api/users/{id}` | Buscar usuário |
+| POST | `/api/users` | Criar usuário |
+| PUT | `/api/users/{id}` | Atualizar usuário |
+| DELETE | `/api/users/{id}` | Deletar usuário |
+
+---
+
+## Controle de Acesso
+
+| Papel | Permissões |
+|-------|------------|
+| `admin` | Acesso total — pode editar e deletar qualquer recurso |
+| `member` | Acesso aos próprios recursos — só pode editar/deletar o que criou |
+
+---
+
+## Testes
+
+Os testes rodam com SQLite em memória, sem precisar do MySQL configurado.
+
+```bash
+php artisan test
+```
+
+---
+
+## Licença
+
+MIT
