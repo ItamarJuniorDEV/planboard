@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Schema;
 return new class () extends Migration {
     public function up(): void
     {
-        Schema::table('tasks', function (Blueprint $table) {
-            $table->dropColumn('completed');
-        });
+        if (Schema::hasColumn('tasks', 'completed')) {
+            Schema::table('tasks', function (Blueprint $table) {
+                $table->dropColumn('completed');
+            });
+        }
     }
 
     public function down(): void
