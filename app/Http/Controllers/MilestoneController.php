@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Milestone;
 use App\Models\Project;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -54,6 +55,8 @@ class MilestoneController extends Controller
                 'message' => 'Marcos listados com sucesso!',
                 'data' => $milestones,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -92,6 +95,8 @@ class MilestoneController extends Controller
                 'message' => 'Marco criado com sucesso!',
                 'data' => $milestone,
             ], 201);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -127,12 +132,7 @@ class MilestoneController extends Controller
                 ], 404);
             }
 
-            if ($milestone->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('update', $milestone);
 
             $milestone->title = $validated['title'];
             $milestone->due_date = $validated['due_date'];
@@ -143,6 +143,8 @@ class MilestoneController extends Controller
                 'message' => 'Marco atualizado com sucesso!',
                 'data' => $milestone,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -178,6 +180,8 @@ class MilestoneController extends Controller
                 'message' => 'Marco encontrado com sucesso!',
                 'data' => $milestone,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -208,12 +212,7 @@ class MilestoneController extends Controller
                 ], 404);
             }
 
-            if ($milestone->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('delete', $milestone);
 
             $milestone->delete();
 
@@ -222,6 +221,8 @@ class MilestoneController extends Controller
                 'message' => 'Marco excluído com sucesso!',
                 'data' => $milestone,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -271,6 +272,8 @@ class MilestoneController extends Controller
                 'deleted' => count($foundIds),
                 'not_found' => $notFound,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([

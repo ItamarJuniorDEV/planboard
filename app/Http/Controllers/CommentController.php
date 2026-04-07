@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Project;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -40,6 +41,8 @@ class CommentController extends Controller
                 'message' => 'Comentários listados com sucesso!',
                 'data' => $comments,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -85,6 +88,8 @@ class CommentController extends Controller
                 'message' => 'Comentário criado com sucesso!',
                 'data' => $comment,
             ], 201);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -126,6 +131,8 @@ class CommentController extends Controller
                 'message' => 'Comentário encontrado!',
                 'data' => $comment,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -167,12 +174,7 @@ class CommentController extends Controller
                 ], 404);
             }
 
-            if ($comment->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('update', $comment);
 
             $comment->content = $validate['content'];
             $comment->author = $validate['author'];
@@ -183,6 +185,8 @@ class CommentController extends Controller
                 'message' => 'Comentário atualizado com sucesso!',
                 'data' => $comment,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -219,12 +223,7 @@ class CommentController extends Controller
                 ], 404);
             }
 
-            if ($comment->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('delete', $comment);
 
             $comment->delete();
 
@@ -233,6 +232,8 @@ class CommentController extends Controller
                 'message' => 'Comentário excluído com sucesso!',
                 'data' => $comment,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -295,6 +296,8 @@ class CommentController extends Controller
                 'deleted' => count($foundIds),
                 'not_found' => $notFound,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([

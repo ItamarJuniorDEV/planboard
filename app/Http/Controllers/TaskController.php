@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -67,6 +68,8 @@ class TaskController extends Controller
                 'message' => 'Tarefas listadas com sucesso!',
                 'data' => $tasks,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -102,6 +105,8 @@ class TaskController extends Controller
                 'message' => 'Tarefa encontrada com sucesso!',
                 'data' => $task,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -144,6 +149,8 @@ class TaskController extends Controller
                 'message' => 'Tarefa criada com sucesso!',
                 'data' => $task,
             ], 201);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -181,12 +188,7 @@ class TaskController extends Controller
                 ], 404);
             }
 
-            if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('update', $task);
 
             $task->title = $validate['title'];
             $task->description = $validate['description'] ?? null;
@@ -199,6 +201,8 @@ class TaskController extends Controller
                 'message' => 'Tarefa atualizada com sucesso!',
                 'data' => $task,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -229,12 +233,7 @@ class TaskController extends Controller
                 ], 404);
             }
 
-            if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('delete', $task);
 
             $deletedTask = $task;
             $task->delete();
@@ -244,6 +243,8 @@ class TaskController extends Controller
                 'message' => 'Tarefa excluída com sucesso!',
                 'data' => $deletedTask,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -300,6 +301,8 @@ class TaskController extends Controller
                 'message' => 'Tarefa movida com sucesso!',
                 'data' => $task,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -369,6 +372,8 @@ class TaskController extends Controller
                 'moved' => count($foundIds),
                 'not_found' => $notFound,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -419,6 +424,8 @@ class TaskController extends Controller
                 'deleted' => count($foundIds),
                 'not_found' => $notFound,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Label;
 use App\Models\Project;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -41,6 +42,8 @@ class LabelController extends Controller
                 'message' => 'Etiquetas listadas com sucesso!',
                 'data' => $labels,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -76,6 +79,8 @@ class LabelController extends Controller
                 'message' => 'Etiqueta encontrada com sucesso!',
                 'data' => $label,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -114,6 +119,8 @@ class LabelController extends Controller
                 'message' => 'Etiqueta criada com sucesso!',
                 'data' => $label,
             ], 201);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -149,12 +156,7 @@ class LabelController extends Controller
                 ], 404);
             }
 
-            if ($label->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('update', $label);
 
             $label->name = $validated['name'];
             $label->color = $validated['color'];
@@ -165,6 +167,8 @@ class LabelController extends Controller
                 'message' => 'Etiqueta atualizada com sucesso!',
                 'data' => $label,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -195,12 +199,7 @@ class LabelController extends Controller
                 ], 404);
             }
 
-            if ($label->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('delete', $label);
 
             $label->delete();
 
@@ -209,6 +208,8 @@ class LabelController extends Controller
                 'message' => 'Etiqueta excluída com sucesso!',
                 'data' => $label,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
