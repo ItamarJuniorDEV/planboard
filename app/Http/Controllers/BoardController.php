@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Board;
 use App\Models\Project;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -47,6 +48,8 @@ class BoardController extends Controller
                 'data' => $boards,
             ], 200);
 
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -83,6 +86,8 @@ class BoardController extends Controller
                 'data' => $board,
             ], 200);
 
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -122,6 +127,8 @@ class BoardController extends Controller
                 'data' => $board,
             ], 201);
 
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -157,12 +164,7 @@ class BoardController extends Controller
                 ], 404);
             }
 
-            if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('update', $board);
 
             $board->name = $validate['name'];
             $board->status = $validate['status'];
@@ -174,6 +176,8 @@ class BoardController extends Controller
                 'data' => $board,
             ], 200);
 
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -204,12 +208,7 @@ class BoardController extends Controller
                 ], 404);
             }
 
-            if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('delete', $board);
 
             $board->delete();
 
@@ -219,6 +218,8 @@ class BoardController extends Controller
                 'data' => $board,
             ], 200);
 
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([

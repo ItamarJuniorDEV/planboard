@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -60,6 +61,8 @@ class ProjectController extends Controller
                 'data' => $projects,
             ], 200);
 
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -87,6 +90,8 @@ class ProjectController extends Controller
                 'message' => 'Projeto encontrado com sucesso!',
                 'data' => $project,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -121,6 +126,8 @@ class ProjectController extends Controller
                 'message' => 'Projeto criado com sucesso!',
                 'data' => $project,
             ], 201);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -150,12 +157,7 @@ class ProjectController extends Controller
                 ], 404);
             }
 
-            if ($project->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('update', $project);
 
             $project->title = $validate['title'];
             $project->description = $validate['description'] ?? null;
@@ -169,6 +171,8 @@ class ProjectController extends Controller
                 'message' => 'Projeto atualizado com sucesso!',
                 'data' => $project,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -190,12 +194,7 @@ class ProjectController extends Controller
                 ], 404);
             }
 
-            if ($project->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('delete', $project);
 
             $deletedProject = $project;
             $project->delete();
@@ -205,6 +204,8 @@ class ProjectController extends Controller
                 'message' => 'Projeto excluído com sucesso!',
                 'data' => $deletedProject,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -267,6 +268,8 @@ class ProjectController extends Controller
                     'overdue' => $overdueMilestones,
                 ],
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
