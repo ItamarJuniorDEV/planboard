@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Throwable;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Usuários listados com sucesso!',
-                'data' => $users,
+                'data' => UserResource::collection($users)->resource,
             ], 200);
 
         } catch (Throwable $e) {
@@ -51,7 +52,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário encontrado!',
-                'data' => $user,
+                'data' => new UserResource($user),
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -83,7 +84,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário criado com sucesso!',
-                'data' => $user,
+                'data' => new UserResource($user),
             ], 201);
 
         } catch (Throwable $e) {
@@ -126,7 +127,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário atualizado com sucesso!',
-                'data' => $user,
+                'data' => new UserResource($user),
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -153,7 +154,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário excluído com sucesso!',
-                'data' => $user,
+                'data' => new UserResource($user),
 
             ], 200);
         } catch (Throwable $e) {

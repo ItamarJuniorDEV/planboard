@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\MilestoneResource;
 use App\Models\Milestone;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -52,7 +53,7 @@ class MilestoneController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Marcos listados com sucesso!',
-                'data' => $milestones,
+                'data' => MilestoneResource::collection($milestones)->resource,
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -90,7 +91,7 @@ class MilestoneController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Marco criado com sucesso!',
-                'data' => $milestone,
+                'data' => new MilestoneResource($milestone),
             ], 201);
         } catch (Throwable $e) {
             report($e);
@@ -141,7 +142,7 @@ class MilestoneController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Marco atualizado com sucesso!',
-                'data' => $milestone,
+                'data' => new MilestoneResource($milestone),
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -176,7 +177,7 @@ class MilestoneController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Marco encontrado com sucesso!',
-                'data' => $milestone,
+                'data' => new MilestoneResource($milestone),
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -220,7 +221,7 @@ class MilestoneController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Marco excluído com sucesso!',
-                'data' => $milestone,
+                'data' => new MilestoneResource($milestone),
             ], 200);
         } catch (Throwable $e) {
             report($e);

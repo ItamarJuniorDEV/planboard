@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Throwable;
@@ -57,7 +58,7 @@ class ProjectController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Projetos listados com sucesso!',
-                'data' => $projects,
+                'data' => ProjectResource::collection($projects)->resource,
             ], 200);
 
         } catch (Throwable $e) {
@@ -85,7 +86,7 @@ class ProjectController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Projeto encontrado com sucesso!',
-                'data' => $project,
+                'data' => new ProjectResource($project),
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -119,7 +120,7 @@ class ProjectController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Projeto criado com sucesso!',
-                'data' => $project,
+                'data' => new ProjectResource($project),
             ], 201);
         } catch (Throwable $e) {
             report($e);
@@ -167,7 +168,7 @@ class ProjectController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Projeto atualizado com sucesso!',
-                'data' => $project,
+                'data' => new ProjectResource($project),
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -203,7 +204,7 @@ class ProjectController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Projeto excluído com sucesso!',
-                'data' => $deletedProject,
+                'data' => new ProjectResource($deletedProject),
             ], 200);
         } catch (Throwable $e) {
             report($e);
