@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\BoardResource;
 use App\Models\Board;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class BoardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Quadros listados com sucesso!',
-                'data' => $boards,
+                'data' => BoardResource::collection($boards)->resource,
             ], 200);
 
         } catch (Throwable $e) {
@@ -80,7 +81,7 @@ class BoardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Quadro encontrado com sucesso!',
-                'data' => $board,
+                'data' => new BoardResource($board),
             ], 200);
 
         } catch (Throwable $e) {
@@ -119,7 +120,7 @@ class BoardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Quadro criado com sucesso!',
-                'data' => $board,
+                'data' => new BoardResource($board),
             ], 201);
 
         } catch (Throwable $e) {
@@ -171,7 +172,7 @@ class BoardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Quadro atualizado com sucesso!',
-                'data' => $board,
+                'data' => new BoardResource($board),
             ], 200);
 
         } catch (Throwable $e) {
@@ -216,7 +217,7 @@ class BoardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Quadro excluído com sucesso!',
-                'data' => $board,
+                'data' => new BoardResource($board),
             ], 200);
 
         } catch (Throwable $e) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ColumnResource;
 use App\Models\Column;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -41,7 +42,7 @@ class ColumnController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Colunas listadas com sucesso!',
-                'data' => $columns,
+                'data' => ColumnResource::collection($columns)->resource,
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -85,7 +86,7 @@ class ColumnController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Coluna encontrada com sucesso!',
-                'data' => $column,
+                'data' => new ColumnResource($column),
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -132,7 +133,7 @@ class ColumnController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Coluna criada com sucesso!',
-                'data' => $column,
+                'data' => new ColumnResource($column),
             ], 201);
         } catch (Throwable $e) {
             report($e);
@@ -192,7 +193,7 @@ class ColumnController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Coluna atualizada com sucesso!',
-                'data' => $column,
+                'data' => new ColumnResource($column),
             ], 200);
         } catch (Throwable $e) {
             report($e);
@@ -246,7 +247,7 @@ class ColumnController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Coluna deletada com sucesso!',
-                'data' => $deletedColumn,
+                'data' => new ColumnResource($deletedColumn),
             ], 200);
         } catch (Throwable $e) {
             report($e);
