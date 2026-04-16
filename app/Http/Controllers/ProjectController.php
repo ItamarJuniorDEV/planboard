@@ -2,23 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Project\IndexProjectRequest;
+use App\Http\Requests\Project\StoreProjectRequest;
+use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Throwable;
 
 class ProjectController extends Controller
 {
-    public function index(Request $request)
+    public function index(IndexProjectRequest $request)
     {
-        $validate = $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-            'status' => ['nullable', 'string', 'in:draft,planning,active,on_hold,completed,cancelled'],
-            'search' => ['nullable', 'string'],
-            'deadline_from' => ['nullable', 'date'],
-            'deadline_to' => ['nullable', 'date'],
-            'order_by' => ['nullable', 'string', 'in:created_at,title,deadline,budget'],
-            'direction' => ['nullable', 'string', 'in:asc,desc'],
-        ]);
+        $validate = $request->validated();
 
         $perPage = $validate['per_page'] ?? 10;
         $orderBy = $validate['order_by'] ?? 'created_at';
@@ -96,15 +91,9 @@ class ProjectController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(StoreProjectRequest $request)
     {
-        $validate = $request->validate([
-            'title' => ['required', 'string', 'max:200'],
-            'description' => ['nullable', 'string'],
-            'budget' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'in:draft,planning,active,on_hold,completed,cancelled'],
-            'deadline' => ['nullable', 'date'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = new Project();
@@ -130,15 +119,9 @@ class ProjectController extends Controller
         }
     }
 
-    public function update(Request $request, int $id)
+    public function update(UpdateProjectRequest $request, int $id)
     {
-        $validate = $request->validate([
-            'title' => ['required', 'string', 'max:200'],
-            'description' => ['nullable', 'string'],
-            'budget' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'in:draft,planning,active,on_hold,completed,cancelled'],
-            'deadline' => ['nullable', 'date'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($id);

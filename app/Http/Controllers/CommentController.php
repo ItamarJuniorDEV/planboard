@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Comment\BulkDeleteCommentRequest;
+use App\Http\Requests\Comment\IndexCommentRequest;
+use App\Http\Requests\Comment\StoreCommentRequest;
+use App\Http\Requests\Comment\UpdateCommentRequest;
 use App\Models\Comment;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -9,11 +13,9 @@ use Throwable;
 
 class CommentController extends Controller
 {
-    public function index(Request $request, int $projectId, int $taskId)
+    public function index(IndexCommentRequest $request, int $projectId, int $taskId)
     {
-        $validate = $request->validate([
-            'per_page' => ['integer', 'nullable', 'min:1', 'max:50'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $perPage = $validate['per_page'] ?? 50;
@@ -49,12 +51,9 @@ class CommentController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId, int $taskId)
+    public function store(StoreCommentRequest $request, int $projectId, int $taskId)
     {
-        $validate = $request->validate([
-            'content' => ['required', 'string'],
-            'author' => ['required', 'string', 'max:100'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -135,12 +134,9 @@ class CommentController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $taskId, int $id)
+    public function update(UpdateCommentRequest $request, int $projectId, int $taskId, int $id)
     {
-        $validate = $request->validate([
-            'content' => ['required', 'string'],
-            'author' => ['required', 'string', 'max:100'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -242,12 +238,9 @@ class CommentController extends Controller
         }
     }
 
-    public function bulkDelete(Request $request, int $projectId, int $taskId)
+    public function bulkDelete(BulkDeleteCommentRequest $request, int $projectId, int $taskId)
     {
-        $validated = $request->validate([
-            'comment_ids' => ['array', 'required', 'min:1'],
-            'comment_ids.*' => ['integer', 'required'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $project = Project::find($projectId);
