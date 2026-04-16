@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Subtask\BulkSubtaskRequest;
+use App\Http\Requests\Subtask\IndexSubtaskRequest;
+use App\Http\Requests\Subtask\StoreSubtaskRequest;
+use App\Http\Requests\Subtask\UpdateSubtaskRequest;
 use App\Models\Project;
 use App\Models\Subtask;
 use Illuminate\Http\Request;
@@ -9,11 +13,9 @@ use Throwable;
 
 class SubtaskController extends Controller
 {
-    public function index(Request $request, int $projectId, int $taskId)
+    public function index(IndexSubtaskRequest $request, int $projectId, int $taskId)
     {
-        $validate = $request->validate([
-            'per_page' => ['integer', 'nullable', 'min:1', 'max:50'],
-        ]);
+        $validate = $request->validated();
 
         $perPage = $validate['per_page'] ?? 50;
 
@@ -98,12 +100,9 @@ class SubtaskController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId, int $taskId)
+    public function store(StoreSubtaskRequest $request, int $projectId, int $taskId)
     {
-        $validate = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'done' => ['required', 'boolean'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -146,12 +145,9 @@ class SubtaskController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $taskId, int $id)
+    public function update(UpdateSubtaskRequest $request, int $projectId, int $taskId, int $id)
     {
-        $validate = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'done' => ['required', 'boolean'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -261,12 +257,9 @@ class SubtaskController extends Controller
         }
     }
 
-    public function bulkComplete(Request $request, int $projectId, int $taskId)
+    public function bulkComplete(BulkSubtaskRequest $request, int $projectId, int $taskId)
     {
-        $validate = $request->validate([
-            'subtask_ids' => ['required', 'array', 'min:1'],
-            'subtask_ids.*' => ['required', 'integer', 'distinct'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -333,12 +326,9 @@ class SubtaskController extends Controller
         }
     }
 
-    public function bulkDelete(Request $request, int $projectId, int $taskId)
+    public function bulkDelete(BulkSubtaskRequest $request, int $projectId, int $taskId)
     {
-        $validate = $request->validate([
-            'subtask_ids' => ['required', 'array', 'min:1'],
-            'subtask_ids.*' => ['required', 'integer', 'distinct'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
