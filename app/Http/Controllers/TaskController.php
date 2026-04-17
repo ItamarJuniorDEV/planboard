@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Board;
 use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
@@ -10,7 +11,7 @@ use Throwable;
 
 class TaskController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(Request $request, Project $project)
     {
         $validate = $request->validate([
             'per_page' => ['integer', 'nullable', 'min:1', 'max:50'],
@@ -21,22 +22,11 @@ class TaskController extends Controller
             'direction' => ['nullable', 'string', 'in:asc,desc'],
         ]);
 
-
         $perPage = $validate['per_page'] ?? 10;
         $orderBy = $validate['order_by'] ?? 'created_at';
         $direction = $validate['direction'] ?? 'asc';
 
-
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $query = $project->tasks()->select([
                 'id',
                 'project_id',
@@ -76,42 +66,16 @@ class TaskController extends Controller
         }
     }
 
-    public function show(int $projectId, int $id)
+    public function show(Project $project, Task $task)
     {
-        try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($id);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Tarefa encontrada com sucesso!',
-                'data' => $task,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno ao buscar tarefa!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Tarefa encontrada com sucesso!',
+            'data' => $task,
+        ], 200);
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(Request $request, Project $project)
     {
         $validate = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -121,15 +85,6 @@ class TaskController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $task = new Task();
             $task->project_id = $project->id;
             $task->user_id = $request->user()->id;
@@ -153,7 +108,7 @@ class TaskController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(Request $request, Project $project, Task $task)
     {
         $validate = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -163,24 +118,6 @@ class TaskController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($id);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
             if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -208,27 +145,9 @@ class TaskController extends Controller
         }
     }
 
-    public function destroy(Request $request, int $projectId, int $id)
+    public function destroy(Request $request, Project $project, Task $task)
     {
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($id);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
             if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -236,7 +155,8 @@ class TaskController extends Controller
                 ], 403);
             }
 
-            $deletedTask = $task;
+            $deletedTask = $task->replicate();
+            $deletedTask->id = $task->id;
             $task->delete();
 
             return response()->json([
@@ -253,45 +173,9 @@ class TaskController extends Controller
         }
     }
 
-    public function moveToColumn(int $projectId, int $boardId, int $columnId, int $taskId)
+    public function moveToColumn(Project $project, Board $board, Column $column, Task $task)
     {
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($boardId);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            $column = $board->columns()->find($columnId);
-
-            if (!$column) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Coluna não encontrada!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
             $task->column_id = $column->id;
             $task->save();
 
@@ -309,7 +193,7 @@ class TaskController extends Controller
         }
     }
 
-    public function bulkMove(Request $request, int $projectId)
+    public function bulkMove(Request $request, Project $project)
     {
         $validate = $request->validate([
             'task_ids' => ['required', 'array', 'min:1'],
@@ -318,15 +202,6 @@ class TaskController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $column = Column::find($validate['column_id']);
 
             if (!$column) {
@@ -347,19 +222,9 @@ class TaskController extends Controller
 
             $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
 
-            $foundIds = [];
+            $foundIds = $tasks->pluck('id')->all();
 
-            foreach ($tasks as $task) {
-                $foundIds[] = $task->id;
-            }
-
-            $notFound = [];
-
-            foreach ($validate['task_ids'] as $taskId) {
-                if (!in_array($taskId, $foundIds)) {
-                    $notFound[] = $taskId;
-                }
-            }
+            $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
 
             $project->tasks()->whereIn('id', $foundIds)->update(['column_id' => $column->id]);
 
@@ -378,7 +243,7 @@ class TaskController extends Controller
         }
     }
 
-    public function bulkDelete(Request $request, int $projectId)
+    public function bulkDelete(Request $request, Project $project)
     {
         $validate = $request->validate([
             'task_ids' => ['required', 'array', 'min:1'],
@@ -386,30 +251,11 @@ class TaskController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
 
-            $foundIds = [];
+            $foundIds = $tasks->pluck('id')->all();
 
-            foreach ($tasks as $task) {
-                $foundIds[] = $task->id;
-            }
-
-            $notFound = [];
-
-            foreach ($validate['task_ids'] as $taskId) {
-                if (!in_array($taskId, $foundIds)) {
-                    $notFound[] = $taskId;
-                }
-            }
+            $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
 
             $project->tasks()->whereIn('id', $foundIds)->delete();
 

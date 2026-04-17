@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Board;
 use App\Models\Column;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -9,7 +10,7 @@ use Throwable;
 
 class ColumnController extends Controller
 {
-    public function index(Request $request, int $projectId, int $boardId)
+    public function index(Request $request, Project $project, Board $board)
     {
         $validated = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
@@ -18,24 +19,6 @@ class ColumnController extends Controller
         $perPage = $validated['per_page'] ?? 50;
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($boardId);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
             $columns = $board->columns()->paginate($perPage);
 
             return response()->json([
@@ -52,51 +35,16 @@ class ColumnController extends Controller
         }
     }
 
-    public function show(int $projectId, int $boardId, int $id)
+    public function show(Project $project, Board $board, Column $column)
     {
-        try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($boardId);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            $column = $board->columns()->find($id);
-
-            if (!$column) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Coluna não encontrada!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Coluna encontrada com sucesso!',
-                'data' => $column,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Coluna encontrada com sucesso!',
+            'data' => $column,
+        ], 200);
     }
 
-    public function store(Request $request, int $projectId, int $boardId)
+    public function store(Request $request, Project $project, Board $board)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
@@ -104,24 +52,6 @@ class ColumnController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($boardId);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
             $column = new Column();
             $column->board_id = $board->id;
             $column->user_id = $request->user()->id;
@@ -143,7 +73,7 @@ class ColumnController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $boardId, int $id)
+    public function update(Request $request, Project $project, Board $board, Column $column)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
@@ -151,33 +81,6 @@ class ColumnController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($boardId);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            $column = $board->columns()->find($id);
-
-            if (!$column) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Coluna não encontrada!',
-                ], 404);
-            }
-
             if ($column->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -203,36 +106,9 @@ class ColumnController extends Controller
         }
     }
 
-    public function destroy(Request $request, int $projectId, int $boardId, int $id)
+    public function destroy(Request $request, Project $project, Board $board, Column $column)
     {
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($boardId);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            $column = $board->columns()->find($id);
-
-            if (!$column) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Coluna não encontrada!',
-                ], 404);
-            }
-
             if ($column->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -240,7 +116,8 @@ class ColumnController extends Controller
                 ], 403);
             }
 
-            $deletedColumn = $column;
+            $deletedColumn = $column->replicate();
+            $deletedColumn->id = $column->id;
             $column->delete();
 
             return response()->json([

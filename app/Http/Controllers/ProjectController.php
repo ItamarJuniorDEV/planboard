@@ -69,31 +69,13 @@ class ProjectController extends Controller
         }
     }
 
-    public function show(int $id)
+    public function show(Project $project)
     {
-        try {
-            $project = Project::select(['id', 'title', 'description', 'budget', 'status', 'deadline'])
-                ->find($id);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Projeto encontrado com sucesso!',
-                'data' => $project,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar o projeto!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Projeto encontrado com sucesso!',
+            'data' => $project,
+        ], 200);
     }
 
     public function store(Request $request)
@@ -130,7 +112,7 @@ class ProjectController extends Controller
         }
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, Project $project)
     {
         $validate = $request->validate([
             'title' => ['required', 'string', 'max:200'],
@@ -141,15 +123,6 @@ class ProjectController extends Controller
         ]);
 
         try {
-            $project = Project::find($id);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             if ($project->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -178,18 +151,9 @@ class ProjectController extends Controller
         }
     }
 
-    public function destroy(Request $request, int $id)
+    public function destroy(Request $request, Project $project)
     {
         try {
-            $project = Project::find($id);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             if ($project->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -197,7 +161,8 @@ class ProjectController extends Controller
                 ], 403);
             }
 
-            $deletedProject = $project;
+            $deletedProject = $project->replicate();
+            $deletedProject->id = $project->id;
             $project->delete();
 
             return response()->json([
@@ -214,18 +179,9 @@ class ProjectController extends Controller
         }
     }
 
-    public function stats(int $projectId)
+    public function stats(Project $project)
     {
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $tasksByStatus = $project->tasks()
                 ->selectRaw('status, count(*) as total')
                 ->groupBy('status')
