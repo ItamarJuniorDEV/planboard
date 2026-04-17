@@ -9,7 +9,7 @@ use Throwable;
 
 class MilestoneController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(Request $request, Project $project)
     {
         $validated = $request->validate([
             'per_page' => ['integer', 'nullable', 'min:1', 'max:20'],
@@ -19,18 +19,12 @@ class MilestoneController extends Controller
             'order_by' => ['nullable', 'string', 'in:created_at,due_date,title'],
             'direction' => ['nullable', 'string', 'in:asc,desc'],
         ]);
+
         $orderBy = $validated['order_by'] ?? 'created_at';
         $direction = $validated['direction'] ?? 'asc';
         $perPage = $validated['per_page'] ?? 20;
 
         try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
             $query = $project->milestones();
 
             if (isset($validated['search'])) {
@@ -63,7 +57,7 @@ class MilestoneController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(Request $request, Project $project)
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:120'],
@@ -71,15 +65,6 @@ class MilestoneController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $milestone = new Milestone();
             $milestone->project_id = $project->id;
             $milestone->user_id = $request->user()->id;
@@ -101,7 +86,7 @@ class MilestoneController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(Request $request, Project $project, Milestone $milestone)
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:120'],
@@ -109,24 +94,6 @@ class MilestoneController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $milestone = $project->milestones()->find($id);
-
-            if (!$milestone) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Marco não encontrado!',
-                ], 404);
-            }
-
             if ($milestone->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -152,62 +119,18 @@ class MilestoneController extends Controller
         }
     }
 
-    public function show(int $projectId, int $id)
+    public function show(Project $project, Milestone $milestone)
     {
-        try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $milestone = $project->milestones()->find($id);
-
-            if (!$milestone) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Marco não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Marco encontrado com sucesso!',
-                'data' => $milestone,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar marco!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Marco encontrado com sucesso!',
+            'data' => $milestone,
+        ], 200);
     }
 
-    public function destroy(Request $request, int $projectId, int $id)
+    public function destroy(Request $request, Project $project, Milestone $milestone)
     {
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $milestone = $project->milestones()->find($id);
-
-            if (!$milestone) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Marco não encontrado!',
-                ], 404);
-            }
-
             if ($milestone->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -231,7 +154,7 @@ class MilestoneController extends Controller
         }
     }
 
-    public function bulkDelete(Request $request, int $projectId)
+    public function bulkDelete(Request $request, Project $project)
     {
         $validated = $request->validate([
             'milestone_ids' => ['array', 'required', 'min:1'],
@@ -239,29 +162,12 @@ class MilestoneController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $milestones = $project->milestones()
+            $foundIds = $project->milestones()
                 ->whereIn('id', $validated['milestone_ids'])
-                ->get();
+                ->pluck('id')
+                ->all();
 
-            $foundIds = [];
-            foreach ($milestones as $milestone) {
-                $foundIds[] = $milestone->id;
-            }
-
-            $notFound = [];
-            foreach ($validated['milestone_ids'] as $milestoneId) {
-                if (!in_array($milestoneId, $foundIds)) {
-                    $notFound[] = $milestoneId;
-                }
-            }
+            $notFound = array_values(array_diff($validated['milestone_ids'], $foundIds));
 
             $project->milestones()->whereIn('id', $foundIds)->delete();
 

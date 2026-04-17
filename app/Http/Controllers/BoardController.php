@@ -9,7 +9,7 @@ use Throwable;
 
 class BoardController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(Request $request, Project $project)
     {
         $validate = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
@@ -20,15 +20,6 @@ class BoardController extends Controller
         $perPage = $validate['per_page'] ?? 20;
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $query = $project->boards();
 
             if (isset($validate['status'])) {
@@ -56,43 +47,16 @@ class BoardController extends Controller
         }
     }
 
-    public function show(Request $request, int $projectId, int $id)
+    public function show(Project $project, Board $board)
     {
-        try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro encontrado com sucesso!',
-                'data' => $board,
-            ], 200);
-
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar encontrar o quadro!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro encontrado com sucesso!',
+            'data' => $board,
+        ], 200);
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(Request $request, Project $project)
     {
         $validate = $request->validate([
             'name' => ['required', 'string', 'max:100'],
@@ -100,15 +64,6 @@ class BoardController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $board = new Board();
             $board->project_id = $project->id;
             $board->user_id = $request->user()->id;
@@ -131,7 +86,7 @@ class BoardController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(Request $request, Project $project, Board $board)
     {
         $validate = $request->validate([
             'name' => ['required', 'string', 'max:100'],
@@ -139,24 +94,6 @@ class BoardController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
             if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -183,27 +120,9 @@ class BoardController extends Controller
         }
     }
 
-    public function destroy(Request $request, int $projectId, int $id)
+    public function destroy(Request $request, Project $project, Board $board)
     {
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
             if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,

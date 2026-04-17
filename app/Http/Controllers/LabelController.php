@@ -9,7 +9,7 @@ use Throwable;
 
 class LabelController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(Request $request, Project $project)
     {
         $validated = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:30'],
@@ -19,15 +19,6 @@ class LabelController extends Controller
         $perPage = $validated['per_page'] ?? 10;
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $query = $project->labels();
 
             if (isset($validated['search'])) {
@@ -50,42 +41,16 @@ class LabelController extends Controller
         }
     }
 
-    public function show(int $projectId, int $id)
+    public function show(Project $project, Label $label)
     {
-        try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $label = $project->labels()->find($id);
-
-            if (!$label) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Etiqueta não encontrada!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Etiqueta encontrada com sucesso!',
-                'data' => $label,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar etiqueta!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Etiqueta encontrada com sucesso!',
+            'data' => $label,
+        ], 200);
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(Request $request, Project $project)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50'],
@@ -93,15 +58,6 @@ class LabelController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
             $label = new Label();
             $label->project_id = $project->id;
             $label->user_id = $request->user()->id;
@@ -123,7 +79,7 @@ class LabelController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(Request $request, Project $project, Label $label)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50'],
@@ -131,24 +87,6 @@ class LabelController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $label = $project->labels()->find($id);
-
-            if (!$label) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Etiqueta não encontrada!',
-                ], 404);
-            }
-
             if ($label->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -174,27 +112,9 @@ class LabelController extends Controller
         }
     }
 
-    public function destroy(Request $request, int $projectId, int $id)
+    public function destroy(Request $request, Project $project, Label $label)
     {
         try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $label = $project->labels()->find($id);
-
-            if (!$label) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Etiqueta não encontrada!',
-                ], 404);
-            }
-
             if ($label->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,

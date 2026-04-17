@@ -4,37 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Project;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Throwable;
 
 class CommentController extends Controller
 {
-    public function index(Request $request, int $projectId, int $taskId)
+    public function index(Request $request, Project $project, Task $task)
     {
         $validate = $request->validate([
             'per_page' => ['integer', 'nullable', 'min:1', 'max:50'],
         ]);
 
+        $perPage = $validate['per_page'] ?? 50;
+
         try {
-            $perPage = $validate['per_page'] ?? 50;
-
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
             $comments = $task->comments()->paginate($perPage);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Comentários listados com sucesso!',
@@ -49,7 +35,7 @@ class CommentController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId, int $taskId)
+    public function store(Request $request, Project $project, Task $task)
     {
         $validate = $request->validate([
             'content' => ['required', 'string'],
@@ -57,22 +43,6 @@ class CommentController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
             $comment = new Comment();
             $comment->task_id = $task->id;
             $comment->user_id = $request->user()->id;
@@ -94,48 +64,16 @@ class CommentController extends Controller
         }
     }
 
-    public function show(int $projectId, int $taskId, int $id)
+    public function show(Project $project, Task $task, Comment $comment)
     {
-        try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $comment = $task->comments()->find($id);
-            if (!$comment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Comentário não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comentário encontrado!',
-                'data' => $comment,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar comentário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Comentário encontrado!',
+            'data' => $comment,
+        ], 200);
     }
 
-    public function update(Request $request, int $projectId, int $taskId, int $id)
+    public function update(Request $request, Project $project, Task $task, Comment $comment)
     {
         $validate = $request->validate([
             'content' => ['required', 'string'],
@@ -143,30 +81,6 @@ class CommentController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $comment = $task->comments()->find($id);
-            if (!$comment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Comentário não encontrado!',
-                ], 404);
-            }
-
             if ($comment->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -192,33 +106,9 @@ class CommentController extends Controller
         }
     }
 
-    public function destroy(Request $request, int $projectId, int $taskId, int $id)
+    public function destroy(Request $request, Project $project, Task $task, Comment $comment)
     {
         try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $comment = $task->comments()->find($id);
-            if (!$comment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Comentário não encontrado!',
-                ], 404);
-            }
-
             if ($comment->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
                 return response()->json([
                     'success' => false,
@@ -242,7 +132,7 @@ class CommentController extends Controller
         }
     }
 
-    public function bulkDelete(Request $request, int $projectId, int $taskId)
+    public function bulkDelete(Request $request, Project $project, Task $task)
     {
         $validated = $request->validate([
             'comment_ids' => ['array', 'required', 'min:1'],
@@ -250,42 +140,12 @@ class CommentController extends Controller
         ]);
 
         try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $comments = $task->comments()
+            $foundIds = $task->comments()
                 ->whereIn('id', $validated['comment_ids'])
-                ->get();
+                ->pluck('id')
+                ->all();
 
-            $foundIds = [];
-            foreach ($comments as $comment) {
-                $foundIds[] = $comment->id;
-            }
-
-            $foundIdsMap = [];
-            foreach ($foundIds as $found) {
-                $foundIdsMap[$found] = true;
-            }
-
-            $notFound = [];
-            foreach ($validated['comment_ids'] as $commentId) {
-                if (!isset($foundIdsMap[$commentId])) {
-                    $notFound[] = $commentId;
-                }
-            }
+            $notFound = array_values(array_diff($validated['comment_ids'], $foundIds));
 
             $task->comments()->whereIn('id', $foundIds)->delete();
 

@@ -36,31 +36,13 @@ class UserController extends Controller
         }
     }
 
-    public function show(int $id)
+    public function show(User $user)
     {
-        try {
-            $user = User::find($id);
-
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário encontrado!',
-                'data' => $user,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar usuário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário encontrado!',
+            'data' => $user,
+        ], 200);
     }
 
     public function store(Request $request)
@@ -73,17 +55,17 @@ class UserController extends Controller
         ]);
 
         try {
-            $user = new User();
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-            $user->password = Hash::make($validated['password']);
-            $user->role = $validated['role'] ?? 'member';
-            $user->save();
+            $created = new User();
+            $created->name = $validated['name'];
+            $created->email = $validated['email'];
+            $created->password = Hash::make($validated['password']);
+            $created->role = $validated['role'] ?? 'member';
+            $created->save();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário criado com sucesso!',
-                'data' => $user,
+                'data' => $created,
             ], 201);
 
         } catch (Throwable $e) {
@@ -96,24 +78,16 @@ class UserController extends Controller
         }
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, User $user)
     {
         $validated = $request->validate([
             'name' => ['string', 'required', 'max:255'],
-            'email' => ['string', 'required','email', 'unique:users,email,' . $id],
+            'email' => ['string', 'required','email', 'unique:users,email,' . $user->id],
             'password' => ['string', 'nullable', 'min:8'],
             'role' => ['string', 'nullable', 'in:admin,member'],
         ]);
 
         try {
-            $user = User::find($id);
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
-
             $user->name = $validated['name'];
             $user->email = $validated['email'];
             $user->role = $validated['role'] ?? $user->role;
@@ -137,24 +111,15 @@ class UserController extends Controller
         }
     }
 
-    public function destroy(int $id)
+    public function destroy(User $user)
     {
         try {
-            $user = User::find($id);
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
-
             $user->delete();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Usuário excluído com sucesso!',
                 'data' => $user,
-
             ], 200);
         } catch (Throwable $e) {
             report($e);
