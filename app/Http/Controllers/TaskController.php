@@ -6,7 +6,6 @@ use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
-use Throwable;
 
 class TaskController extends Controller
 {
@@ -21,94 +20,76 @@ class TaskController extends Controller
             'direction' => ['nullable', 'string', 'in:asc,desc'],
         ]);
 
-
         $perPage = $validate['per_page'] ?? 10;
         $orderBy = $validate['order_by'] ?? 'created_at';
         $direction = $validate['direction'] ?? 'asc';
 
+        $project = Project::find($projectId);
 
-        try {
-            $project = Project::find($projectId);
-
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $query = $project->tasks()->select([
-                'id',
-                'project_id',
-                'column_id',
-                'title',
-                'description',
-                'priority',
-                'status',
-            ]);
-
-            if (isset($validate['priority'])) {
-                $query->where('priority', $validate['priority']);
-            }
-
-            if (isset($validate['search'])) {
-                $query->where('title', 'like', '%' . $validate['search'] . '%');
-            }
-
-            if (isset($validate['status'])) {
-                $query->where('status', $validate['status']);
-            }
-
-            $query->orderBy($orderBy, $direction);
-            $tasks = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Tarefas listadas com sucesso!',
-                'data' => $tasks,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar listar as tarefas!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $query = $project->tasks()->select([
+            'id',
+            'project_id',
+            'column_id',
+            'title',
+            'description',
+            'priority',
+            'status',
+        ]);
+
+        if (isset($validate['priority'])) {
+            $query->where('priority', $validate['priority']);
+        }
+
+        if (isset($validate['search'])) {
+            $query->where('title', 'like', '%' . $validate['search'] . '%');
+        }
+
+        if (isset($validate['status'])) {
+            $query->where('status', $validate['status']);
+        }
+
+        $query->orderBy($orderBy, $direction);
+        $tasks = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tarefas listadas com sucesso!',
+            'data' => $tasks,
+        ], 200);
     }
 
     public function show(int $projectId, int $id)
     {
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($id);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Tarefa encontrada com sucesso!',
-                'data' => $task,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno ao buscar tarefa!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $task = $project->tasks()->find($id);
+
+        if (!$task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tarefa não encontrada!',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tarefa encontrada com sucesso!',
+            'data' => $task,
+        ], 200);
     }
 
     public function store(Request $request, int $projectId)
@@ -120,37 +101,29 @@ class TaskController extends Controller
             'status' => ['required', 'string', 'in:todo,doing,done'],
         ]);
 
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = new Task();
-            $task->project_id = $project->id;
-            $task->user_id = $request->user()->id;
-            $task->title = $validate['title'];
-            $task->description = $validate['description'] ?? null;
-            $task->priority = $validate['priority'];
-            $task->status = $validate['status'];
-            $task->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Tarefa criada com sucesso!',
-                'data' => $task,
-            ], 201);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao criar tarefa!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $task = new Task();
+        $task->project_id = $project->id;
+        $task->user_id = $request->user()->id;
+        $task->title = $validate['title'];
+        $task->description = $validate['description'] ?? null;
+        $task->priority = $validate['priority'];
+        $task->status = $validate['status'];
+        $task->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tarefa criada com sucesso!',
+            'data' => $task,
+        ], 201);
     }
 
     public function update(Request $request, int $projectId, int $id)
@@ -162,151 +135,127 @@ class TaskController extends Controller
             'status' => ['required', 'string', 'in:todo,doing,done'],
         ]);
 
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($id);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
-
-            $task->title = $validate['title'];
-            $task->description = $validate['description'] ?? null;
-            $task->priority = $validate['priority'];
-            $task->status = $validate['status'];
-            $task->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Tarefa atualizada com sucesso!',
-                'data' => $task,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao atualizar tarefa!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $task = $project->tasks()->find($id);
+
+        if (!$task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tarefa não encontrada!',
+            ], 404);
+        }
+
+        if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ação não autorizada!',
+            ], 403);
+        }
+
+        $task->title = $validate['title'];
+        $task->description = $validate['description'] ?? null;
+        $task->priority = $validate['priority'];
+        $task->status = $validate['status'];
+        $task->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tarefa atualizada com sucesso!',
+            'data' => $task,
+        ], 200);
     }
 
     public function destroy(Request $request, int $projectId, int $id)
     {
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($id);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
-
-            $deletedTask = $task;
-            $task->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Tarefa excluída com sucesso!',
-                'data' => $deletedTask,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao excluir tarefa!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $task = $project->tasks()->find($id);
+
+        if (!$task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tarefa não encontrada!',
+            ], 404);
+        }
+
+        if ($task->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ação não autorizada!',
+            ], 403);
+        }
+
+        $deletedTask = $task;
+        $task->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tarefa excluída com sucesso!',
+            'data' => $deletedTask,
+        ], 200);
     }
 
     public function moveToColumn(int $projectId, int $boardId, int $columnId, int $taskId)
     {
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($boardId);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            $column = $board->columns()->find($columnId);
-
-            if (!$column) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Coluna não encontrada!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $task->column_id = $column->id;
-            $task->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Tarefa movida com sucesso!',
-                'data' => $task,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar mover tarefa!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $board = $project->boards()->find($boardId);
+
+        if (!$board) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quadro não encontrado!',
+            ], 404);
+        }
+
+        $column = $board->columns()->find($columnId);
+
+        if (!$column) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Coluna não encontrada!',
+            ], 404);
+        }
+
+        $task = $project->tasks()->find($taskId);
+
+        if (!$task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tarefa não encontrada!',
+            ], 404);
+        }
+
+        $task->column_id = $column->id;
+        $task->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tarefa movida com sucesso!',
+            'data' => $task,
+        ], 200);
     }
 
     public function bulkMove(Request $request, int $projectId)
@@ -317,65 +266,48 @@ class TaskController extends Controller
             'column_id' => ['required', 'integer'],
         ]);
 
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $column = Column::find($validate['column_id']);
-
-            if (!$column) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Coluna não encontrada!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($column->board_id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Essa coluna não pertence a este projeto!',
-                ], 404);
-            }
-
-            $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
-
-            $foundIds = [];
-
-            foreach ($tasks as $task) {
-                $foundIds[] = $task->id;
-            }
-
-            $notFound = [];
-
-            foreach ($validate['task_ids'] as $taskId) {
-                if (!in_array($taskId, $foundIds)) {
-                    $notFound[] = $taskId;
-                }
-            }
-
-            $project->tasks()->whereIn('id', $foundIds)->update(['column_id' => $column->id]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Operação concluída!',
-                'moved' => count($foundIds),
-                'not_found' => $notFound,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao mover tarefas!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $column = Column::find($validate['column_id']);
+
+        if (!$column) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Coluna não encontrada!',
+            ], 404);
+        }
+
+        $board = $project->boards()->find($column->board_id);
+
+        if (!$board) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Essa coluna não pertence a este projeto!',
+            ], 404);
+        }
+
+        $foundIds = $project->tasks()
+            ->whereIn('id', $validate['task_ids'])
+            ->pluck('id')
+            ->all();
+
+        $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
+
+        $project->tasks()->whereIn('id', $foundIds)->update(['column_id' => $column->id]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Operação concluída!',
+            'moved' => count($foundIds),
+            'not_found' => $notFound,
+        ], 200);
     }
 
     public function bulkDelete(Request $request, int $projectId)
@@ -385,46 +317,29 @@ class TaskController extends Controller
             'task_ids.*' => ['required', 'integer'],
         ]);
 
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $tasks = $project->tasks()->whereIn('id', $validate['task_ids'])->get();
-
-            $foundIds = [];
-
-            foreach ($tasks as $task) {
-                $foundIds[] = $task->id;
-            }
-
-            $notFound = [];
-
-            foreach ($validate['task_ids'] as $taskId) {
-                if (!in_array($taskId, $foundIds)) {
-                    $notFound[] = $taskId;
-                }
-            }
-
-            $project->tasks()->whereIn('id', $foundIds)->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Operação concluída!',
-                'deleted' => count($foundIds),
-                'not_found' => $notFound,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao deletar tarefas!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $foundIds = $project->tasks()
+            ->whereIn('id', $validate['task_ids'])
+            ->pluck('id')
+            ->all();
+
+        $notFound = array_values(array_diff($validate['task_ids'], $foundIds));
+
+        $project->tasks()->whereIn('id', $foundIds)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Operação concluída!',
+            'deleted' => count($foundIds),
+            'not_found' => $notFound,
+        ], 200);
     }
 }
