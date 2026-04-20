@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Board;
 use App\Models\Project;
 use Illuminate\Http\Request;
-use Throwable;
 
 class BoardController extends Controller
 {
@@ -19,77 +18,59 @@ class BoardController extends Controller
 
         $perPage = $validate['per_page'] ?? 20;
 
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $query = $project->boards();
-
-            if (isset($validate['status'])) {
-                $query->where('status', $validate['status']);
-            }
-
-            if (isset($validate['search'])) {
-                $query->where('name', 'LIKE', '%' . $validate['search'] . '%');
-            }
-
-            $boards = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadros listados com sucesso!',
-                'data' => $boards,
-            ], 200);
-
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar listar os quadros!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $query = $project->boards();
+
+        if (isset($validate['status'])) {
+            $query->where('status', $validate['status']);
+        }
+
+        if (isset($validate['search'])) {
+            $query->where('name', 'LIKE', '%' . $validate['search'] . '%');
+        }
+
+        $boards = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadros listados com sucesso!',
+            'data' => $boards,
+        ], 200);
     }
 
     public function show(Request $request, int $projectId, int $id)
     {
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro encontrado com sucesso!',
-                'data' => $board,
-            ], 200);
-
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar encontrar o quadro!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $board = $project->boards()->find($id);
+
+        if (!$board) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quadro não encontrado!',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro encontrado com sucesso!',
+            'data' => $board,
+        ], 200);
     }
 
     public function store(Request $request, int $projectId)
@@ -99,36 +80,27 @@ class BoardController extends Controller
             'status' => ['required', 'string', 'in:active,archived'],
         ]);
 
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = new Board();
-            $board->project_id = $project->id;
-            $board->user_id = $request->user()->id;
-            $board->name = $validate['name'];
-            $board->status = $validate['status'];
-            $board->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro criado com sucesso!',
-                'data' => $board,
-            ], 201);
-
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar criar o quadro!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $board = new Board();
+        $board->project_id = $project->id;
+        $board->user_id = $request->user()->id;
+        $board->name = $validate['name'];
+        $board->status = $validate['status'];
+        $board->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro criado com sucesso!',
+            'data' => $board,
+        ], 201);
     }
 
     public function update(Request $request, int $projectId, int $id)
@@ -138,93 +110,75 @@ class BoardController extends Controller
             'status' => ['required', 'string', 'in:active,archived'],
         ]);
 
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
-
-            $board->name = $validate['name'];
-            $board->status = $validate['status'];
-            $board->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro atualizado com sucesso!',
-                'data' => $board,
-            ], 200);
-
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar atualizar o quadro!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $board = $project->boards()->find($id);
+
+        if (!$board) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quadro não encontrado!',
+            ], 404);
+        }
+
+        if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ação não autorizada!',
+            ], 403);
+        }
+
+        $board->name = $validate['name'];
+        $board->status = $validate['status'];
+        $board->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro atualizado com sucesso!',
+            'data' => $board,
+        ], 200);
     }
 
     public function destroy(Request $request, int $projectId, int $id)
     {
-        try {
-            $project = Project::find($projectId);
+        $project = Project::find($projectId);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
-
-            $board->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro excluído com sucesso!',
-                'data' => $board,
-            ], 200);
-
-        } catch (Throwable $e) {
-            report($e);
+        if (!$project) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar excluir o quadro!',
-            ], 500);
+                'message' => 'Projeto não encontrado!',
+            ], 404);
         }
+
+        $board = $project->boards()->find($id);
+
+        if (!$board) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quadro não encontrado!',
+            ], 404);
+        }
+
+        if ($board->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ação não autorizada!',
+            ], 403);
+        }
+
+        $board->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro excluído com sucesso!',
+            'data' => $board,
+        ], 200);
     }
 }

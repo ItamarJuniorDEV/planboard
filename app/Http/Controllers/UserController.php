@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -17,50 +16,31 @@ class UserController extends Controller
 
         $perPage = $validated['per_page'] ?? 10;
 
-        try {
-            $users = User::paginate($perPage);
+        $users = User::paginate($perPage);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuários listados com sucesso!',
-                'data' => $users,
-            ], 200);
-
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar listar usuários!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuários listados com sucesso!',
+            'data' => $users,
+        ], 200);
     }
 
     public function show(int $id)
     {
-        try {
-            $user = User::find($id);
+        $user = User::find($id);
 
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário encontrado!',
-                'data' => $user,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar usuário!',
-            ], 500);
+                'message' => 'Usuário não encontrado!',
+            ], 404);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário encontrado!',
+            'data' => $user,
+        ], 200);
     }
 
     public function store(Request $request)
@@ -72,28 +52,18 @@ class UserController extends Controller
             'role' => ['string', 'nullable', 'in:admin,member'],
         ]);
 
-        try {
-            $user = new User();
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-            $user->password = Hash::make($validated['password']);
-            $user->role = $validated['role'] ?? 'member';
-            $user->save();
+        $user = new User();
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->password = Hash::make($validated['password']);
+        $user->role = $validated['role'] ?? 'member';
+        $user->save();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário criado com sucesso!',
-                'data' => $user,
-            ], 201);
-
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar criar usuário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário criado com sucesso!',
+            'data' => $user,
+        ], 201);
     }
 
     public function update(Request $request, int $id)
@@ -105,63 +75,49 @@ class UserController extends Controller
             'role' => ['string', 'nullable', 'in:admin,member'],
         ]);
 
-        try {
-            $user = User::find($id);
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
+        $user = User::find($id);
 
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-            $user->role = $validated['role'] ?? $user->role;
-
-            if (isset($validated['password'])) {
-                $user->password = Hash::make($validated['password']);
-            }
-            $user->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário atualizado com sucesso!',
-                'data' => $user,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar editar usuário!',
-            ], 500);
+                'message' => 'Usuário não encontrado!',
+            ], 404);
         }
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->role = $validated['role'] ?? $user->role;
+
+        if (isset($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário atualizado com sucesso!',
+            'data' => $user,
+        ], 200);
     }
 
     public function destroy(int $id)
     {
-        try {
-            $user = User::find($id);
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
+        $user = User::find($id);
 
-            $user->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário excluído com sucesso!',
-                'data' => $user,
-
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar excluir usuário!',
-            ], 500);
+                'message' => 'Usuário não encontrado!',
+            ], 404);
         }
+
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário excluído com sucesso!',
+            'data' => $user,
+        ], 200);
     }
 }
