@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 class ProjectController extends Controller
@@ -226,47 +227,50 @@ class ProjectController extends Controller
                 ], 404);
             }
 
-            $tasksByStatus = $project->tasks()
-                ->selectRaw('status, count(*) as total')
-                ->groupBy('status')
-                ->get();
+            $stats = Cache::remember("project:{$project->id}:stats", 60, function () use ($project) {
+                $tasksByStatus = $project->tasks()
+                    ->selectRaw('status, count(*) as total')
+                    ->groupBy('status')
+                    ->get();
 
-            $tasksByPriority = $project->tasks()
-                ->selectRaw('priority, count(*) as total')
-                ->groupBy('priority')
-                ->get();
+                $tasksByPriority = $project->tasks()
+                    ->selectRaw('priority, count(*) as total')
+                    ->groupBy('priority')
+                    ->get();
 
-            $subtasks = $project->tasks()
-                ->withCount([
-                    'subtasks',
-                    'subtasks as subtasks_done_count' => fn ($q) => $q->where('done', true),
-                ])
-                ->get();
+                $subtasks = $project->tasks()
+                    ->withCount([
+                        'subtasks',
+                        'subtasks as subtasks_done_count' => fn ($q) => $q->where('done', true),
+                    ])
+                    ->get();
 
-            $totalSubtasks = $subtasks->sum('subtasks_count');
-            $doneSubtasks  = $subtasks->sum('subtasks_done_count');
+                $totalSubtasks = $subtasks->sum('subtasks_count');
+                $doneSubtasks  = $subtasks->sum('subtasks_done_count');
 
-            $totalMilestones   = $project->milestones()->count();
-            $overdueMilestones = $project->milestones()
-                ->whereDate('due_date', '<', now())
-                ->count();
+                $totalMilestones   = $project->milestones()->count();
+                $overdueMilestones = $project->milestones()
+                    ->whereDate('due_date', '<', now())
+                    ->count();
 
-            return response()->json([
-                'success' => true,
-                'tasks' => [
-                    'by_status'   => $tasksByStatus,
-                    'by_priority' => $tasksByPriority,
-                ],
-                'subtasks' => [
-                    'total'   => $totalSubtasks,
-                    'done'    => $doneSubtasks,
-                    'pending' => $totalSubtasks - $doneSubtasks,
-                ],
-                'milestones' => [
-                    'total'   => $totalMilestones,
-                    'overdue' => $overdueMilestones,
-                ],
-            ], 200);
+                return [
+                    'tasks' => [
+                        'by_status'   => $tasksByStatus,
+                        'by_priority' => $tasksByPriority,
+                    ],
+                    'subtasks' => [
+                        'total'   => $totalSubtasks,
+                        'done'    => $doneSubtasks,
+                        'pending' => $totalSubtasks - $doneSubtasks,
+                    ],
+                    'milestones' => [
+                        'total'   => $totalMilestones,
+                        'overdue' => $overdueMilestones,
+                    ],
+                ];
+            });
+
+            return response()->json(['success' => true] + $stats, 200);
         } catch (Throwable $e) {
             report($e);
             return response()->json([
