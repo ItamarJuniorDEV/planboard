@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Milestone\IndexMilestoneRequest;
+use App\Http\Requests\Milestone\StoreMilestoneRequest;
+use App\Http\Requests\Milestone\UpdateMilestoneRequest;
 use App\Http\Resources\MilestoneResource;
 use App\Models\Milestone;
 use App\Models\Project;
@@ -11,16 +14,9 @@ use Throwable;
 
 class MilestoneController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(IndexMilestoneRequest $request, int $projectId)
     {
-        $validated = $request->validate([
-            'per_page' => ['integer', 'nullable', 'min:1', 'max:20'],
-            'search' => ['nullable', 'string'],
-            'due_from' => ['nullable', 'date'],
-            'due_to' => ['nullable', 'date'],
-            'order_by' => ['nullable', 'string', 'in:created_at,due_date,title'],
-            'direction' => ['nullable', 'string', 'in:asc,desc'],
-        ]);
+        $validated = $request->validated();
         $orderBy = $validated['order_by'] ?? 'created_at';
         $direction = $validated['direction'] ?? 'asc';
         $perPage = $validated['per_page'] ?? 20;
@@ -67,12 +63,9 @@ class MilestoneController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(StoreMilestoneRequest $request, int $projectId)
     {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:120'],
-            'due_date' => ['nullable', 'date'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -107,12 +100,9 @@ class MilestoneController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(UpdateMilestoneRequest $request, int $projectId, int $id)
     {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:120'],
-            'due_date' => ['nullable', 'date'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $project = Project::find($projectId);

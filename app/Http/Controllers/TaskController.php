@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Task\BulkDeleteTaskRequest;
+use App\Http\Requests\Task\BulkMoveTaskRequest;
+use App\Http\Requests\Task\IndexTaskRequest;
+use App\Http\Requests\Task\StoreTaskRequest;
+use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Column;
 use App\Models\Project;
@@ -12,16 +17,9 @@ use Throwable;
 
 class TaskController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(IndexTaskRequest $request, int $projectId)
     {
-        $validate = $request->validate([
-            'per_page' => ['integer', 'nullable', 'min:1', 'max:50'],
-            'priority' => ['nullable', 'string', 'in:low,medium,high,urgent'],
-            'search' => ['nullable', 'string'],
-            'status' => ['nullable', 'string', 'in:todo,doing,done'],
-            'order_by' => ['nullable', 'string', 'in:created_at,priority,status,title'],
-            'direction' => ['nullable', 'string', 'in:asc,desc'],
-        ]);
+        $validate = $request->validated();
 
 
         $perPage = $validate['per_page'] ?? 10;
@@ -117,14 +115,9 @@ class TaskController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(StoreTaskRequest $request, int $projectId)
     {
-        $validate = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'priority' => ['required', 'string', 'in:low,medium,high,urgent'],
-            'status' => ['required', 'string', 'in:todo,doing,done'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -161,14 +154,9 @@ class TaskController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(UpdateTaskRequest $request, int $projectId, int $id)
     {
-        $validate = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'priority' => ['required', 'string', 'in:low,medium,high,urgent'],
-            'status' => ['required', 'string', 'in:todo,doing,done'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -313,13 +301,9 @@ class TaskController extends Controller
         }
     }
 
-    public function bulkMove(Request $request, int $projectId)
+    public function bulkMove(BulkMoveTaskRequest $request, int $projectId)
     {
-        $validate = $request->validate([
-            'task_ids' => ['required', 'array', 'min:1'],
-            'task_ids.*' => ['required', 'integer'],
-            'column_id' => ['required', 'integer'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -384,12 +368,9 @@ class TaskController extends Controller
         }
     }
 
-    public function bulkDelete(Request $request, int $projectId)
+    public function bulkDelete(BulkDeleteTaskRequest $request, int $projectId)
     {
-        $validate = $request->validate([
-            'task_ids' => ['required', 'array', 'min:1'],
-            'task_ids.*' => ['required', 'integer'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
