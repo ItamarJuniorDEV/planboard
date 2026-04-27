@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Board;
 
+use App\Models\Board;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexBoardRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('viewAny', Board::class);
     }
 
     public function rules(): array

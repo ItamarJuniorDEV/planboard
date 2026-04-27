@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Milestone;
 
+use App\Models\Milestone;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexMilestoneRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('viewAny', Milestone::class);
     }
 
     public function rules(): array

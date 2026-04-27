@@ -8,7 +8,7 @@ class UpdateLabelRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('update', $this->route('label'));
     }
 
     public function rules(): array

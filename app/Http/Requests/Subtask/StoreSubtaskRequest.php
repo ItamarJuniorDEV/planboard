@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Subtask;
 
+use App\Models\Subtask;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSubtaskRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('create', Subtask::class);
     }
 
     public function rules(): array
