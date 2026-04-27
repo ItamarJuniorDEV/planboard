@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Subtask;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -43,6 +44,8 @@ class SubtaskController extends Controller
                 'message' => 'Subtarefas listadas com sucesso!',
                 'data' => $subTasks,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
 
@@ -88,6 +91,8 @@ class SubtaskController extends Controller
                 'message' => 'Subtask encontrada!',
                 'data' => $subTask,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
 
@@ -136,6 +141,8 @@ class SubtaskController extends Controller
                 'message' => 'Subtarefa criada com sucesso!',
                 'data' => $subtask,
             ], 201);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
 
@@ -181,12 +188,7 @@ class SubtaskController extends Controller
                 ], 404);
             }
 
-            if ($subtask->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('update', $subtask);
 
             $subtask->title = $validate['title'];
             $subtask->done = $validate['done'];
@@ -197,6 +199,8 @@ class SubtaskController extends Controller
                 'message' => 'Subtarefa atualizada com sucesso!',
                 'data' => $subtask,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
 
@@ -237,12 +241,7 @@ class SubtaskController extends Controller
                 ], 404);
             }
 
-            if ($subtask->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('delete', $subtask);
 
             $subtask->delete();
 
@@ -251,6 +250,8 @@ class SubtaskController extends Controller
                 'message' => 'Subtarefa excluída com sucesso!',
                 'data' => $subtask,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
 
@@ -323,6 +324,8 @@ class SubtaskController extends Controller
                 'completed' => $completed,
                 'not_found' => $notFound,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
 
@@ -393,6 +396,8 @@ class SubtaskController extends Controller
                 'deleted' => $deleted,
                 'not_found' => $notFound,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
 
