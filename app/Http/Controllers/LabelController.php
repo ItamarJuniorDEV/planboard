@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Label\IndexLabelRequest;
+use App\Http\Requests\Label\StoreLabelRequest;
+use App\Http\Requests\Label\UpdateLabelRequest;
 use App\Http\Resources\LabelResource;
 use App\Models\Label;
 use App\Models\Project;
@@ -11,12 +14,9 @@ use Throwable;
 
 class LabelController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(IndexLabelRequest $request, int $projectId)
     {
-        $validated = $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:30'],
-            'search' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         $perPage = $validated['per_page'] ?? 10;
 
@@ -91,12 +91,9 @@ class LabelController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(StoreLabelRequest $request, int $projectId)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:50'],
-            'color' => ['required', 'string', 'max:30'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -131,12 +128,9 @@ class LabelController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(UpdateLabelRequest $request, int $projectId, int $id)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:50'],
-            'color' => ['required', 'string', 'max:30'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $project = Project::find($projectId);

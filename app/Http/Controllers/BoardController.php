@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Board\IndexBoardRequest;
+use App\Http\Requests\Board\StoreBoardRequest;
+use App\Http\Requests\Board\UpdateBoardRequest;
 use App\Http\Resources\BoardResource;
 use App\Models\Board;
 use App\Models\Project;
@@ -11,13 +14,9 @@ use Throwable;
 
 class BoardController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(IndexBoardRequest $request, int $projectId)
     {
-        $validate = $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
-            'status' => ['nullable', 'string', 'in:active,archived'],
-            'search' => ['nullable', 'string'],
-        ]);
+        $validate = $request->validated();
 
         $perPage = $validate['per_page'] ?? 20;
 
@@ -98,12 +97,9 @@ class BoardController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(StoreBoardRequest $request, int $projectId)
     {
-        $validate = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'in:active,archived'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -139,12 +135,9 @@ class BoardController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(UpdateBoardRequest $request, int $projectId, int $id)
     {
-        $validate = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'in:active,archived'],
-        ]);
+        $validate = $request->validated();
 
         try {
             $project = Project::find($projectId);

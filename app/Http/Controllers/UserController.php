@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\User\IndexUserRequest;
+use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Throwable;
@@ -10,11 +13,9 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(IndexUserRequest $request)
     {
-        $validated = $request->validate([
-            'per_page' => ['integer', 'nullable', 'min:1', 'max:10'],
-        ]);
+        $validated = $request->validated();
 
         $perPage = $validated['per_page'] ?? 10;
 
@@ -64,14 +65,9 @@ class UserController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['string', 'required', 'max:255'],
-            'email' => ['string', 'required', 'email', 'unique:users,email'],
-            'password' => ['string', 'required', 'min:8'],
-            'role' => ['string', 'nullable', 'in:admin,member'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $user = new User();
@@ -97,14 +93,9 @@ class UserController extends Controller
         }
     }
 
-    public function update(Request $request, int $id)
+    public function update(UpdateUserRequest $request, int $id)
     {
-        $validated = $request->validate([
-            'name' => ['string', 'required', 'max:255'],
-            'email' => ['string', 'required','email', 'unique:users,email,' . $id],
-            'password' => ['string', 'nullable', 'min:8'],
-            'role' => ['string', 'nullable', 'in:admin,member'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $user = User::find($id);
