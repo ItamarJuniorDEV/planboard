@@ -9,295 +9,101 @@ use App\Http\Requests\Comment\UpdateCommentRequest;
 use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Project;
-use Illuminate\Auth\Access\AuthorizationException;
+use App\Models\Task;
 use Illuminate\Http\Request;
-use Throwable;
 
 class CommentController extends Controller
 {
-    public function index(IndexCommentRequest $request, int $projectId, int $taskId)
+    public function index(IndexCommentRequest $request, Project $project, Task $task)
     {
         $validate = $request->validated();
 
-        try {
-            $perPage = $validate['per_page'] ?? 50;
+        $perPage = $validate['per_page'] ?? 50;
 
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $comments = $task->comments()->paginate($perPage);
 
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $comments = $task->comments()->paginate($perPage);
-            return response()->json([
-                'success' => true,
-                'message' => 'Comentários listados com sucesso!',
-                'data' => CommentResource::collection($comments)->resource,
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar comentários!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Comentários listados com sucesso!',
+            'data' => CommentResource::collection($comments)->resource,
+        ], 200);
     }
 
-    public function store(StoreCommentRequest $request, int $projectId, int $taskId)
+    public function store(StoreCommentRequest $request, Project $project, Task $task)
     {
         $validate = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $comment = new Comment();
+        $comment->task_id = $task->id;
+        $comment->user_id = $request->user()->id;
+        $comment->content = $validate['content'];
+        $comment->author = $validate['author'];
+        $comment->save();
 
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $comment = new Comment();
-            $comment->task_id = $task->id;
-            $comment->user_id = $request->user()->id;
-            $comment->content = $validate['content'];
-            $comment->author = $validate['author'];
-            $comment->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comentário criado com sucesso!',
-                'data' => new CommentResource($comment),
-            ], 201);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar adicionar comentário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Comentário criado com sucesso!',
+            'data' => new CommentResource($comment),
+        ], 201);
     }
 
-    public function show(int $projectId, int $taskId, int $id)
+    public function show(Project $project, Task $task, Comment $comment)
     {
-        try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $this->authorize('view', $comment);
 
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $comment = $task->comments()->find($id);
-            if (!$comment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Comentário não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comentário encontrado!',
-                'data' => new CommentResource($comment),
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar comentário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Comentário encontrado!',
+            'data' => new CommentResource($comment),
+        ], 200);
     }
 
-    public function update(UpdateCommentRequest $request, int $projectId, int $taskId, int $id)
+    public function update(UpdateCommentRequest $request, Project $project, Task $task, Comment $comment)
     {
         $validate = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $comment->content = $validate['content'];
+        $comment->author = $validate['author'];
+        $comment->save();
 
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $comment = $task->comments()->find($id);
-            if (!$comment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Comentário não encontrado!',
-                ], 404);
-            }
-
-            $this->authorize('update', $comment);
-
-            $comment->content = $validate['content'];
-            $comment->author = $validate['author'];
-            $comment->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comentário atualizado com sucesso!',
-                'data' => new CommentResource($comment),
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno ao tentar atualizar comentário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Comentário atualizado com sucesso!',
+            'data' => new CommentResource($comment),
+        ], 200);
     }
 
-    public function destroy(Request $request, int $projectId, int $taskId, int $id)
+    public function destroy(Request $request, Project $project, Task $task, Comment $comment)
     {
-        try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $this->authorize('delete', $comment);
 
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
+        $comment->delete();
 
-            $comment = $task->comments()->find($id);
-            if (!$comment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Comentário não encontrado!',
-                ], 404);
-            }
-
-            $this->authorize('delete', $comment);
-
-            $comment->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comentário excluído com sucesso!',
-                'data' => new CommentResource($comment),
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar excluir comentário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Comentário excluído com sucesso!',
+            'data' => new CommentResource($comment),
+        ], 200);
     }
 
-    public function bulkDelete(BulkDeleteCommentRequest $request, int $projectId, int $taskId)
+    public function bulkDelete(BulkDeleteCommentRequest $request, Project $project, Task $task)
     {
         $validated = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $foundIds = $task->comments()
+            ->whereIn('id', $validated['comment_ids'])
+            ->pluck('id')
+            ->all();
 
-            $task = $project->tasks()->find($taskId);
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
+        $notFound = array_values(array_diff($validated['comment_ids'], $foundIds));
 
-            $comments = $task->comments()
-                ->whereIn('id', $validated['comment_ids'])
-                ->get();
+        $task->comments()->whereIn('id', $foundIds)->delete();
 
-            $foundIds = [];
-            foreach ($comments as $comment) {
-                $foundIds[] = $comment->id;
-            }
-
-            $foundIdsMap = [];
-            foreach ($foundIds as $found) {
-                $foundIdsMap[$found] = true;
-            }
-
-            $notFound = [];
-            foreach ($validated['comment_ids'] as $commentId) {
-                if (!isset($foundIdsMap[$commentId])) {
-                    $notFound[] = $commentId;
-                }
-            }
-
-            $task->comments()->whereIn('id', $foundIds)->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Operação concluída!',
-                'deleted' => count($foundIds),
-                'not_found' => $notFound,
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar excluir comentários!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Operação concluída!',
+            'deleted' => count($foundIds),
+            'not_found' => $notFound,
+        ], 200);
     }
 }
