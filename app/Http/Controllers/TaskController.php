@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TaskResource;
 use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
@@ -66,7 +67,7 @@ class TaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tarefas listadas com sucesso!',
-                'data' => $tasks,
+                'data' => TaskResource::collection($tasks)->resource,
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -103,7 +104,7 @@ class TaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tarefa encontrada com sucesso!',
-                'data' => $task,
+                'data' => new TaskResource($task),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -147,7 +148,7 @@ class TaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tarefa criada com sucesso!',
-                'data' => $task,
+                'data' => new TaskResource($task),
             ], 201);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -199,7 +200,7 @@ class TaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tarefa atualizada com sucesso!',
-                'data' => $task,
+                'data' => new TaskResource($task),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -241,7 +242,7 @@ class TaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tarefa excluída com sucesso!',
-                'data' => $deletedTask,
+                'data' => new TaskResource($deletedTask),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -299,7 +300,7 @@ class TaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tarefa movida com sucesso!',
-                'data' => $task,
+                'data' => new TaskResource($task),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;

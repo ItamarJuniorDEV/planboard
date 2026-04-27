@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -33,7 +34,7 @@ class AuthController extends Controller
                 'message' => 'Login realizado com sucesso!',
                 'token' => $token,
                 'token_type' => 'Bearer',
-                'data' => $user,
+                'data' => new UserResource($user),
             ], 200);
 
         } catch (Throwable $e) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\LabelResource;
 use App\Models\Label;
 use App\Models\Project;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -40,7 +41,7 @@ class LabelController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Etiquetas listadas com sucesso!',
-                'data' => $labels,
+                'data' => LabelResource::collection($labels)->resource,
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -77,7 +78,7 @@ class LabelController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Etiqueta encontrada com sucesso!',
-                'data' => $label,
+                'data' => new LabelResource($label),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -117,7 +118,7 @@ class LabelController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Etiqueta criada com sucesso!',
-                'data' => $label,
+                'data' => new LabelResource($label),
             ], 201);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -165,7 +166,7 @@ class LabelController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Etiqueta atualizada com sucesso!',
-                'data' => $label,
+                'data' => new LabelResource($label),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -206,7 +207,7 @@ class LabelController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Etiqueta excluída com sucesso!',
-                'data' => $label,
+                'data' => new LabelResource($label),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
