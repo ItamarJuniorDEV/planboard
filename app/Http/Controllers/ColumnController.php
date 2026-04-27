@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Column\IndexColumnRequest;
+use App\Http\Requests\Column\StoreColumnRequest;
+use App\Http\Requests\Column\UpdateColumnRequest;
 use App\Http\Resources\ColumnResource;
 use App\Models\Column;
 use App\Models\Project;
@@ -11,11 +14,9 @@ use Throwable;
 
 class ColumnController extends Controller
 {
-    public function index(Request $request, int $projectId, int $boardId)
+    public function index(IndexColumnRequest $request, int $projectId, int $boardId)
     {
-        $validated = $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-        ]);
+        $validated = $request->validated();
 
         $perPage = $validated['per_page'] ?? 50;
 
@@ -102,12 +103,9 @@ class ColumnController extends Controller
         }
     }
 
-    public function store(Request $request, int $projectId, int $boardId)
+    public function store(StoreColumnRequest $request, int $projectId, int $boardId)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'position' => ['required', 'integer', 'min:1'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $project = Project::find($projectId);
@@ -151,12 +149,9 @@ class ColumnController extends Controller
         }
     }
 
-    public function update(Request $request, int $projectId, int $boardId, int $id)
+    public function update(UpdateColumnRequest $request, int $projectId, int $boardId, int $id)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'position' => ['required', 'integer', 'min:1'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $project = Project::find($projectId);
