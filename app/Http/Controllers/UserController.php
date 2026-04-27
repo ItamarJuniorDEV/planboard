@@ -7,8 +7,6 @@ use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Throwable;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -19,141 +17,74 @@ class UserController extends Controller
 
         $perPage = $validated['per_page'] ?? 10;
 
-        try {
-            $users = User::paginate($perPage);
+        $users = User::paginate($perPage);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuários listados com sucesso!',
-                'data' => UserResource::collection($users)->resource,
-            ], 200);
-
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar listar usuários!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuários listados com sucesso!',
+            'data' => UserResource::collection($users)->resource,
+        ], 200);
     }
 
-    public function show(int $id)
+    public function show(User $user)
     {
-        try {
-            $user = User::find($id);
+        $this->authorize('view', $user);
 
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário encontrado!',
-                'data' => new UserResource($user),
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar usuário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário encontrado!',
+            'data' => new UserResource($user),
+        ], 200);
     }
 
     public function store(StoreUserRequest $request)
     {
         $validated = $request->validated();
 
-        try {
-            $user = new User();
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-            $user->password = Hash::make($validated['password']);
-            $user->role = $validated['role'] ?? 'member';
-            $user->save();
+        $created = new User();
+        $created->name = $validated['name'];
+        $created->email = $validated['email'];
+        $created->password = Hash::make($validated['password']);
+        $created->role = $validated['role'] ?? 'member';
+        $created->save();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário criado com sucesso!',
-                'data' => new UserResource($user),
-            ], 201);
-
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar criar usuário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário criado com sucesso!',
+            'data' => new UserResource($created),
+        ], 201);
     }
 
-    public function update(UpdateUserRequest $request, int $id)
+    public function update(UpdateUserRequest $request, User $user)
     {
         $validated = $request->validated();
 
-        try {
-            $user = User::find($id);
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->role = $validated['role'] ?? $user->role;
 
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-            $user->role = $validated['role'] ?? $user->role;
-
-            if (isset($validated['password'])) {
-                $user->password = Hash::make($validated['password']);
-            }
-            $user->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário atualizado com sucesso!',
-                'data' => new UserResource($user),
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar editar usuário!',
-            ], 500);
+        if (isset($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
         }
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário atualizado com sucesso!',
+            'data' => new UserResource($user),
+        ], 200);
     }
 
-    public function destroy(int $id)
+    public function destroy(User $user)
     {
-        try {
-            $user = User::find($id);
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuário não encontrado!',
-                ], 404);
-            }
+        $this->authorize('delete', $user);
 
-            $user->delete();
+        $user->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuário excluído com sucesso!',
-                'data' => new UserResource($user),
-
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar excluir usuário!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuário excluído com sucesso!',
+            'data' => new UserResource($user),
+        ], 200);
     }
 }

@@ -8,218 +8,89 @@ use App\Http\Requests\Board\UpdateBoardRequest;
 use App\Http\Resources\BoardResource;
 use App\Models\Board;
 use App\Models\Project;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
-use Throwable;
 
 class BoardController extends Controller
 {
-    public function index(IndexBoardRequest $request, int $projectId)
+    public function index(IndexBoardRequest $request, Project $project)
     {
         $validate = $request->validated();
 
         $perPage = $validate['per_page'] ?? 20;
 
-        try {
-            $project = Project::find($projectId);
+        $query = $project->boards();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $query = $project->boards();
-
-            if (isset($validate['status'])) {
-                $query->where('status', $validate['status']);
-            }
-
-            if (isset($validate['search'])) {
-                $query->where('name', 'LIKE', '%' . $validate['search'] . '%');
-            }
-
-            $boards = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadros listados com sucesso!',
-                'data' => BoardResource::collection($boards)->resource,
-            ], 200);
-
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar listar os quadros!',
-            ], 500);
+        if (isset($validate['status'])) {
+            $query->where('status', $validate['status']);
         }
+
+        if (isset($validate['search'])) {
+            $query->where('name', 'LIKE', '%'.$validate['search'].'%');
+        }
+
+        $boards = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadros listados com sucesso!',
+            'data' => BoardResource::collection($boards)->resource,
+        ], 200);
     }
 
-    public function show(Request $request, int $projectId, int $id)
+    public function show(Project $project, Board $board)
     {
-        try {
-            $project = Project::find($projectId);
+        $this->authorize('view', $board);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro encontrado com sucesso!',
-                'data' => new BoardResource($board),
-            ], 200);
-
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar encontrar o quadro!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro encontrado com sucesso!',
+            'data' => new BoardResource($board),
+        ], 200);
     }
 
-    public function store(StoreBoardRequest $request, int $projectId)
+    public function store(StoreBoardRequest $request, Project $project)
     {
         $validate = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
+        $board = new Board();
+        $board->project_id = $project->id;
+        $board->user_id = $request->user()->id;
+        $board->name = $validate['name'];
+        $board->status = $validate['status'];
+        $board->save();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = new Board();
-            $board->project_id = $project->id;
-            $board->user_id = $request->user()->id;
-            $board->name = $validate['name'];
-            $board->status = $validate['status'];
-            $board->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro criado com sucesso!',
-                'data' => new BoardResource($board),
-            ], 201);
-
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar criar o quadro!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro criado com sucesso!',
+            'data' => new BoardResource($board),
+        ], 201);
     }
 
-    public function update(UpdateBoardRequest $request, int $projectId, int $id)
+    public function update(UpdateBoardRequest $request, Project $project, Board $board)
     {
         $validate = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
+        $board->name = $validate['name'];
+        $board->status = $validate['status'];
+        $board->save();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            $this->authorize('update', $board);
-
-            $board->name = $validate['name'];
-            $board->status = $validate['status'];
-            $board->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro atualizado com sucesso!',
-                'data' => new BoardResource($board),
-            ], 200);
-
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar atualizar o quadro!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro atualizado com sucesso!',
+            'data' => new BoardResource($board),
+        ], 200);
     }
 
-    public function destroy(Request $request, int $projectId, int $id)
+    public function destroy(Request $request, Project $project, Board $board)
     {
-        try {
-            $project = Project::find($projectId);
+        $this->authorize('delete', $board);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $board->delete();
 
-            $board = $project->boards()->find($id);
-
-            if (!$board) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Quadro não encontrado!',
-                ], 404);
-            }
-
-            $this->authorize('delete', $board);
-
-            $board->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quadro excluído com sucesso!',
-                'data' => new BoardResource($board),
-            ], 200);
-
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar excluir o quadro!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Quadro excluído com sucesso!',
+            'data' => new BoardResource($board),
+        ], 200);
     }
 }

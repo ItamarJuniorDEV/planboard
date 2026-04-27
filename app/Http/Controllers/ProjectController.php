@@ -7,9 +7,7 @@ use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
-use Throwable;
 
 class ProjectController extends Controller
 {
@@ -21,245 +19,151 @@ class ProjectController extends Controller
         $orderBy = $validate['order_by'] ?? 'created_at';
         $direction = $validate['direction'] ?? 'desc';
 
-        try {
-            $query = Project::select([
-                'id',
-                'title',
-                'description',
-                'budget',
-                'status',
-                'deadline',
-            ]);
+        $query = Project::select([
+            'id',
+            'user_id',
+            'title',
+            'description',
+            'budget',
+            'status',
+            'deadline',
+        ]);
 
-            if (isset($validate['status'])) {
-                $query->where('status', $validate['status']);
-            }
-
-            if (isset($validate['search'])) {
-                $query->where('title', 'like', '%' . $validate['search'] . '%');
-            }
-
-            if (isset($validate['deadline_from'])) {
-                $query->whereDate('deadline', '>=', $validate['deadline_from']);
-            }
-
-            if (isset($validate['deadline_to'])) {
-                $query->whereDate('deadline', '<=', $validate['deadline_to']);
-            }
-
-            $query->orderBy($orderBy, $direction);
-
-            $projects = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Projetos listados com sucesso!',
-                'data' => ProjectResource::collection($projects)->resource,
-            ], 200);
-
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar listar os projetos!',
-            ], 500);
+        if (isset($validate['status'])) {
+            $query->where('status', $validate['status']);
         }
+
+        if (isset($validate['search'])) {
+            $query->where('title', 'like', '%'.$validate['search'].'%');
+        }
+
+        if (isset($validate['deadline_from'])) {
+            $query->whereDate('deadline', '>=', $validate['deadline_from']);
+        }
+
+        if (isset($validate['deadline_to'])) {
+            $query->whereDate('deadline', '<=', $validate['deadline_to']);
+        }
+
+        $query->orderBy($orderBy, $direction);
+
+        $projects = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Projetos listados com sucesso!',
+            'data' => ProjectResource::collection($projects)->resource,
+        ], 200);
     }
 
-    public function show(int $id)
+    public function show(Project $project)
     {
-        try {
-            $project = Project::select(['id', 'title', 'description', 'budget', 'status', 'deadline'])
-                ->find($id);
+        $this->authorize('view', $project);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Projeto encontrado com sucesso!',
-                'data' => new ProjectResource($project),
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar o projeto!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Projeto encontrado com sucesso!',
+            'data' => new ProjectResource($project),
+        ], 200);
     }
 
     public function store(StoreProjectRequest $request)
     {
         $validate = $request->validated();
 
-        try {
-            $project = new Project();
-            $project->title = $validate['title'];
-            $project->description = $validate['description'] ?? null;
-            $project->budget = $validate['budget'];
-            $project->status = $validate['status'];
-            $project->deadline = $validate['deadline'] ?? null;
-            $project->user_id = $request->user()->id;
-            $project->save();
+        $project = new Project();
+        $project->title = $validate['title'];
+        $project->description = $validate['description'] ?? null;
+        $project->budget = $validate['budget'];
+        $project->status = $validate['status'];
+        $project->deadline = $validate['deadline'] ?? null;
+        $project->user_id = $request->user()->id;
+        $project->save();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Projeto criado com sucesso!',
-                'data' => new ProjectResource($project),
-            ], 201);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Não foi possível criar o projeto!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Projeto criado com sucesso!',
+            'data' => new ProjectResource($project),
+        ], 201);
     }
 
-    public function update(UpdateProjectRequest $request, int $id)
+    public function update(UpdateProjectRequest $request, Project $project)
     {
         $validate = $request->validated();
 
-        try {
-            $project = Project::find($id);
+        $project->title = $validate['title'];
+        $project->description = $validate['description'] ?? null;
+        $project->budget = $validate['budget'];
+        $project->status = $validate['status'];
+        $project->deadline = $validate['deadline'] ?? null;
+        $project->save();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $this->authorize('update', $project);
-
-            $project->title = $validate['title'];
-            $project->description = $validate['description'] ?? null;
-            $project->budget = $validate['budget'];
-            $project->status = $validate['status'];
-            $project->deadline = $validate['deadline'] ?? null;
-            $project->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Projeto atualizado com sucesso!',
-                'data' => new ProjectResource($project),
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Projeto atualizado com sucesso!',
+            'data' => new ProjectResource($project),
+        ], 200);
     }
 
-    public function destroy(Request $request, int $id)
+    public function destroy(Request $request, Project $project)
     {
-        try {
-            $project = Project::find($id);
+        $this->authorize('delete', $project);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $deletedProject = $project->replicate();
+        $deletedProject->id = $project->id;
+        $project->delete();
 
-            $this->authorize('delete', $project);
-
-            $deletedProject = $project;
-            $project->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Projeto excluído com sucesso!',
-                'data' => new ProjectResource($deletedProject),
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Projeto excluído com sucesso!',
+            'data' => new ProjectResource($deletedProject),
+        ], 200);
     }
 
-    public function stats(int $projectId)
+    public function stats(Project $project)
     {
-        try {
-            $project = Project::find($projectId);
+        $this->authorize('view', $project);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $tasksByStatus = $project->tasks()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->get();
 
-            $tasksByStatus = $project->tasks()
-                ->selectRaw('status, count(*) as total')
-                ->groupBy('status')
-                ->get();
+        $tasksByPriority = $project->tasks()
+            ->selectRaw('priority, count(*) as total')
+            ->groupBy('priority')
+            ->get();
 
-            $tasksByPriority = $project->tasks()
-                ->selectRaw('priority, count(*) as total')
-                ->groupBy('priority')
-                ->get();
+        $subtasks = $project->tasks()
+            ->withCount([
+                'subtasks',
+                'subtasks as subtasks_done_count' => fn ($q) => $q->where('done', true),
+            ])
+            ->get();
 
-            $subtasks = $project->tasks()
-                ->withCount([
-                    'subtasks',
-                    'subtasks as subtasks_done_count' => fn ($q) => $q->where('done', true),
-                ])
-                ->get();
+        $totalSubtasks = $subtasks->sum('subtasks_count');
+        $doneSubtasks = $subtasks->sum('subtasks_done_count');
 
-            $totalSubtasks = $subtasks->sum('subtasks_count');
-            $doneSubtasks  = $subtasks->sum('subtasks_done_count');
+        $totalMilestones = $project->milestones()->count();
+        $overdueMilestones = $project->milestones()
+            ->whereDate('due_date', '<', now())
+            ->count();
 
-            $totalMilestones   = $project->milestones()->count();
-            $overdueMilestones = $project->milestones()
-                ->whereDate('due_date', '<', now())
-                ->count();
-
-            return response()->json([
-                'success' => true,
-                'tasks' => [
-                    'by_status'   => $tasksByStatus,
-                    'by_priority' => $tasksByPriority,
-                ],
-                'subtasks' => [
-                    'total'   => $totalSubtasks,
-                    'done'    => $doneSubtasks,
-                    'pending' => $totalSubtasks - $doneSubtasks,
-                ],
-                'milestones' => [
-                    'total'   => $totalMilestones,
-                    'overdue' => $overdueMilestones,
-                ],
-            ], 200);
-        } catch (AuthorizationException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'tasks' => [
+                'by_status' => $tasksByStatus,
+                'by_priority' => $tasksByPriority,
+            ],
+            'subtasks' => [
+                'total' => $totalSubtasks,
+                'done' => $doneSubtasks,
+                'pending' => $totalSubtasks - $doneSubtasks,
+            ],
+            'milestones' => [
+                'total' => $totalMilestones,
+                'overdue' => $overdueMilestones,
+            ],
+        ], 200);
     }
 }
