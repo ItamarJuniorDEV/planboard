@@ -8,16 +8,16 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('update', $this->route('user'));
     }
 
     public function rules(): array
     {
-        $id = $this->route('id');
+        $userId = $this->route('user')?->id;
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'unique:users,email,'.$id],
+            'email' => ['required', 'string', 'email', 'unique:users,email,'.$userId],
             'password' => ['nullable', 'string', 'min:8'],
             'role' => ['nullable', 'string', 'in:admin,member'],
         ];
