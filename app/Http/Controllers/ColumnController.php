@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Column;
 use App\Models\Project;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -43,6 +44,8 @@ class ColumnController extends Controller
                 'message' => 'Colunas listadas com sucesso!',
                 'data' => $columns,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -87,6 +90,8 @@ class ColumnController extends Controller
                 'message' => 'Coluna encontrada com sucesso!',
                 'data' => $column,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -134,6 +139,8 @@ class ColumnController extends Controller
                 'message' => 'Coluna criada com sucesso!',
                 'data' => $column,
             ], 201);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -178,12 +185,7 @@ class ColumnController extends Controller
                 ], 404);
             }
 
-            if ($column->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('update', $column);
 
             $column->name = $validated['name'];
             $column->position = $validated['position'];
@@ -194,6 +196,8 @@ class ColumnController extends Controller
                 'message' => 'Coluna atualizada com sucesso!',
                 'data' => $column,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
@@ -233,12 +237,7 @@ class ColumnController extends Controller
                 ], 404);
             }
 
-            if ($column->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
+            $this->authorize('delete', $column);
 
             $deletedColumn = $column;
             $column->delete();
@@ -248,6 +247,8 @@ class ColumnController extends Controller
                 'message' => 'Coluna deletada com sucesso!',
                 'data' => $deletedColumn,
             ], 200);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             report($e);
             return response()->json([
