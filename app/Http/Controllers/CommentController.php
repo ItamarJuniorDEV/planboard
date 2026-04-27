@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Project;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -39,7 +40,7 @@ class CommentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Comentários listados com sucesso!',
-                'data' => $comments,
+                'data' => CommentResource::collection($comments)->resource,
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -86,7 +87,7 @@ class CommentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Comentário criado com sucesso!',
-                'data' => $comment,
+                'data' => new CommentResource($comment),
             ], 201);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -129,7 +130,7 @@ class CommentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Comentário encontrado!',
-                'data' => $comment,
+                'data' => new CommentResource($comment),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -183,7 +184,7 @@ class CommentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Comentário atualizado com sucesso!',
-                'data' => $comment,
+                'data' => new CommentResource($comment),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -230,7 +231,7 @@ class CommentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Comentário excluído com sucesso!',
-                'data' => $comment,
+                'data' => new CommentResource($comment),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;

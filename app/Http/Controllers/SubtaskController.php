@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\SubtaskResource;
 use App\Models\Project;
 use App\Models\Subtask;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -42,7 +43,7 @@ class SubtaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Subtarefas listadas com sucesso!',
-                'data' => $subTasks,
+                'data' => SubtaskResource::collection($subTasks)->resource,
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -89,7 +90,7 @@ class SubtaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Subtask encontrada!',
-                'data' => $subTask,
+                'data' => new SubtaskResource($subTask),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -139,7 +140,7 @@ class SubtaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Subtarefa criada com sucesso!',
-                'data' => $subtask,
+                'data' => new SubtaskResource($subtask),
             ], 201);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -197,7 +198,7 @@ class SubtaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Subtarefa atualizada com sucesso!',
-                'data' => $subtask,
+                'data' => new SubtaskResource($subtask),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
@@ -248,7 +249,7 @@ class SubtaskController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Subtarefa excluída com sucesso!',
-                'data' => $subtask,
+                'data' => new SubtaskResource($subtask),
             ], 200);
         } catch (AuthorizationException $e) {
             throw $e;
