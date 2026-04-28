@@ -35,8 +35,18 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->input('email').'|'.$request->ip());
         });
 
-        Gate::before(function (User $user, string $ability) {
-            return $user->role === 'admin' ? true : null;
+        Gate::before(function (User $user, string $ability, array $arguments = []) {
+            if ($user->role !== 'admin') {
+                return null;
+            }
+
+            $resource = $arguments[0] ?? null;
+
+            if ($resource instanceof User && $ability === 'delete') {
+                return null;
+            }
+
+            return true;
         });
     }
 }
