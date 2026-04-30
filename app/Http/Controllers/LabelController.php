@@ -2,219 +2,91 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Label\IndexLabelRequest;
+use App\Http\Requests\Label\StoreLabelRequest;
+use App\Http\Requests\Label\UpdateLabelRequest;
+use App\Http\Resources\LabelResource;
 use App\Models\Label;
 use App\Models\Project;
 use Illuminate\Http\Request;
-use Throwable;
 
 class LabelController extends Controller
 {
-    public function index(Request $request, int $projectId)
+    public function index(IndexLabelRequest $request, Project $project)
     {
-        $validated = $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:30'],
-            'search' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         $perPage = $validated['per_page'] ?? 10;
 
-        try {
-            $project = Project::find($projectId);
+        $query = $project->labels();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $query = $project->labels();
-
-            if (isset($validated['search'])) {
-                $query->where('name', 'LIKE', '%' . $validated['search'] . '%');
-            }
-
-            $labels = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Etiquetas listadas com sucesso!',
-                'data' => $labels,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar listar as etiquetas!',
-            ], 500);
+        if (isset($validated['search'])) {
+            $query->where('name', 'LIKE', '%'.$validated['search'].'%');
         }
+
+        $labels = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Etiquetas listadas com sucesso!',
+            'data' => LabelResource::collection($labels)->resource,
+        ], 200);
     }
 
-    public function show(int $projectId, int $id)
+    public function show(Project $project, Label $label)
     {
-        try {
-            $project = Project::find($projectId);
+        $this->authorize('view', $label);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $label = $project->labels()->find($id);
-
-            if (!$label) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Etiqueta não encontrada!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Etiqueta encontrada com sucesso!',
-                'data' => $label,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar etiqueta!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Etiqueta encontrada com sucesso!',
+            'data' => new LabelResource($label),
+        ], 200);
     }
 
-    public function store(Request $request, int $projectId)
+    public function store(StoreLabelRequest $request, Project $project)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:50'],
-            'color' => ['required', 'string', 'max:30'],
-        ]);
+        $validated = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
+        $label = new Label();
+        $label->project_id = $project->id;
+        $label->user_id = $request->user()->id;
+        $label->name = $validated['name'];
+        $label->color = $validated['color'];
+        $label->save();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $label = new Label();
-            $label->project_id = $project->id;
-            $label->user_id = $request->user()->id;
-            $label->name = $validated['name'];
-            $label->color = $validated['color'];
-            $label->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Etiqueta criada com sucesso!',
-                'data' => $label,
-            ], 201);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar criar etiqueta!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Etiqueta criada com sucesso!',
+            'data' => new LabelResource($label),
+        ], 201);
     }
 
-    public function update(Request $request, int $projectId, int $id)
+    public function update(UpdateLabelRequest $request, Project $project, Label $label)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:50'],
-            'color' => ['required', 'string', 'max:30'],
-        ]);
+        $validated = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
+        $label->name = $validated['name'];
+        $label->color = $validated['color'];
+        $label->save();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $label = $project->labels()->find($id);
-
-            if (!$label) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Etiqueta não encontrada!',
-                ], 404);
-            }
-
-            if ($label->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
-
-            $label->name = $validated['name'];
-            $label->color = $validated['color'];
-            $label->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Etiqueta atualizada com sucesso!',
-                'data' => $label,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar atualizar etiqueta!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Etiqueta atualizada com sucesso!',
+            'data' => new LabelResource($label),
+        ], 200);
     }
 
-    public function destroy(Request $request, int $projectId, int $id)
+    public function destroy(Request $request, Project $project, Label $label)
     {
-        try {
-            $project = Project::find($projectId);
+        $this->authorize('delete', $label);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $label->delete();
 
-            $label = $project->labels()->find($id);
-
-            if (!$label) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Etiqueta não encontrada!',
-                ], 404);
-            }
-
-            if ($label->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
-
-            $label->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Etiqueta excluída com sucesso!',
-                'data' => $label,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar excluir etiqueta!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Etiqueta excluída com sucesso!',
+            'data' => new LabelResource($label),
+        ], 200);
     }
 }
