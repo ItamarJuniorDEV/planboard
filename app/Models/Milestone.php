@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Observers\InvalidatesProjectStats;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(InvalidatesProjectStats::class)]
 class Milestone extends Model
 {
     protected $fillable = [
