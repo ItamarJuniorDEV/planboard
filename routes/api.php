@@ -47,8 +47,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::put('/projects/{project}/boards/{board}/columns/{column}', [ColumnController::class, 'update']);
         Route::delete('/projects/{project}/boards/{board}/columns/{column}', [ColumnController::class, 'destroy']);
 
-        // task move within board/column
-        Route::patch('/projects/{project}/boards/{board}/columns/{column}/tasks/{task}/move', [TaskController::class, 'moveToColumn']);
     });
 
     // tasks scoped to project
@@ -60,6 +58,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('/projects/{project}/tasks/{task}', [TaskController::class, 'show']);
         Route::put('/projects/{project}/tasks/{task}', [TaskController::class, 'update']);
         Route::delete('/projects/{project}/tasks/{task}', [TaskController::class, 'destroy']);
+        Route::patch('/projects/{project}/tasks/{task}/move', [TaskController::class, 'move']);
 
         // subtasks
         Route::post('/projects/{project}/tasks/{task}/subtasks/bulk-complete', [SubtaskController::class, 'bulkComplete']);
