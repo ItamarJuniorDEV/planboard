@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Task\BulkDeleteTaskRequest;
 use App\Http\Requests\Task\BulkMoveTaskRequest;
 use App\Http\Requests\Task\IndexTaskRequest;
+use App\Http\Requests\Task\MoveTaskRequest;
 use App\Http\Requests\Task\StoreTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
-use App\Models\Board;
 use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
@@ -120,9 +120,20 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function moveToColumn(Project $project, Board $board, Column $column, Task $task)
+    public function move(MoveTaskRequest $request, Project $project, Task $task)
     {
-        $this->authorize('move', $task);
+        $validate = $request->validated();
+
+        $column = Column::find($validate['column_id']);
+
+        $board = $project->boards()->find($column->board_id);
+
+        if (! $board) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Essa coluna não pertence a este projeto!',
+            ], 404);
+        }
 
         $task->column_id = $column->id;
         $task->save();
