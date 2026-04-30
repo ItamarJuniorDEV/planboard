@@ -2,66 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Throwable;
+use Illuminate\Support\Timebox;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $validated = $request->validate([
-            'email' => ['string', 'required', 'email'],
-            'password' => ['string', 'required'],
-        ]);
+        $validated = $request->validated();
 
-        try {
-            $user = User::where('email', $validated['email'])->first();
+        $user = (new Timebox())->call(function () use ($validated) {
+            $candidate = User::where('email', $validated['email'])->first();
 
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Credenciais inválidas!',
-                ], 401);
-            }
+            return ($candidate && Hash::check($validated['password'], $candidate->password))
+                ? $candidate
+                : null;
+        }, 500_000);
 
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Login realizado com sucesso!',
-                'token' => $token,
-                'token_type' => 'Bearer',
-                'data' => $user,
-            ], 200);
-
-        } catch (Throwable $e) {
-            report($e);
-
+        if (! $user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erro interno no servidor ao tentar logar',
-            ], 500);
+                'message' => 'Credenciais inválidas!',
+            ], 401);
         }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login realizado com sucesso!',
+            'token' => $token,
+            'token_type' => 'Bearer',
+            'data' => new UserResource($user),
+        ], 200);
     }
 
     public function logout(Request $request)
     {
-        try {
-            $request->user()->currentAccessToken()->delete();
+        $request->user()->currentAccessToken()->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Logout realizado com sucesso!',
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar realizar logout!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Logout realizado com sucesso!',
+        ], 200);
     }
 }

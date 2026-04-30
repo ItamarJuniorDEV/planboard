@@ -2,404 +2,145 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Subtask\BulkSubtaskRequest;
+use App\Http\Requests\Subtask\IndexSubtaskRequest;
+use App\Http\Requests\Subtask\StoreSubtaskRequest;
+use App\Http\Requests\Subtask\UpdateSubtaskRequest;
+use App\Http\Resources\SubtaskResource;
 use App\Models\Project;
 use App\Models\Subtask;
+use App\Models\Task;
 use Illuminate\Http\Request;
-use Throwable;
 
 class SubtaskController extends Controller
 {
-    public function index(Request $request, int $projectId, int $taskId)
+    public function index(IndexSubtaskRequest $request, Project $project, Task $task)
     {
-        $validate = $request->validate([
-            'per_page' => ['integer', 'nullable', 'min:1', 'max:50'],
-        ]);
+        $validate = $request->validated();
 
         $perPage = $validate['per_page'] ?? 50;
 
-        try {
-            $project = Project::find($projectId);
+        $subTasks = $task->subtasks()->paginate($perPage);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $subTasks = $task->subtasks()->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Subtarefas listadas com sucesso!',
-                'data' => $subTasks,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao listar SubTasks!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Subtarefas listadas com sucesso!',
+            'data' => SubtaskResource::collection($subTasks)->resource,
+        ], 200);
     }
 
-    public function show(Request $request, int $projectId, int $taskId, int $id)
+    public function show(Project $project, Task $task, Subtask $subtask)
     {
-        try {
-            $project = Project::find($projectId);
+        $this->authorize('view', $subtask);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $subTask = $task->subtasks()->find($id);
-
-            if (!$subTask) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Subtarefa não encontrada!',
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Subtask encontrada!',
-                'data' => $subTask,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar buscar Sub Tarefa!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Subtask encontrada!',
+            'data' => new SubtaskResource($subtask),
+        ], 200);
     }
 
-    public function store(Request $request, int $projectId, int $taskId)
+    public function store(StoreSubtaskRequest $request, Project $project, Task $task)
     {
-        $validate = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'done' => ['required', 'boolean'],
-        ]);
+        $validate = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
+        $subtask = new Subtask();
+        $subtask->task_id = $task->id;
+        $subtask->user_id = $request->user()->id;
+        $subtask->title = $validate['title'];
+        $subtask->done = $validate['done'];
+        $subtask->save();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $subtask = new Subtask();
-            $subtask->task_id = $task->id;
-            $subtask->user_id = $request->user()->id;
-            $subtask->title = $validate['title'];
-            $subtask->done = $validate['done'];
-            $subtask->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Subtarefa criada com sucesso!',
-                'data' => $subtask,
-            ], 201);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno no servidor ao tentar criar SubTarefa!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Subtarefa criada com sucesso!',
+            'data' => new SubtaskResource($subtask),
+        ], 201);
     }
 
-    public function update(Request $request, int $projectId, int $taskId, int $id)
+    public function update(UpdateSubtaskRequest $request, Project $project, Task $task, Subtask $subtask)
     {
-        $validate = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'done' => ['required', 'boolean'],
-        ]);
+        $validate = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
+        $subtask->title = $validate['title'];
+        $subtask->done = $validate['done'];
+        $subtask->save();
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
-
-            $task = $project->tasks()->find($taskId);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $subtask = $task->subtasks()->find($id);
-
-            if (!$subtask) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Subtarefa não encontrada!',
-                ], 404);
-            }
-
-            if ($subtask->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
-
-            $subtask->title = $validate['title'];
-            $subtask->done = $validate['done'];
-            $subtask->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Subtarefa atualizada com sucesso!',
-                'data' => $subtask,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno ao tentar atualizar a subtarefa!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Subtarefa atualizada com sucesso!',
+            'data' => new SubtaskResource($subtask),
+        ], 200);
     }
 
-    public function destroy(Request $request, int $projectId, int $taskId, int $id)
+    public function destroy(Request $request, Project $project, Task $task, Subtask $subtask)
     {
-        try {
-            $project = Project::find($projectId);
+        $this->authorize('delete', $subtask);
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $subtask->delete();
 
-            $task = $project->tasks()->find($taskId);
-
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
-
-            $subtask = $task->subtasks()->find($id);
-
-            if (!$subtask) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Subtarefa não encontrada!',
-                ], 404);
-            }
-
-            if ($subtask->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ação não autorizada!',
-                ], 403);
-            }
-
-            $subtask->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Subtarefa excluída com sucesso!',
-                'data' => $subtask,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno ao tentar excluir subtarefa!',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Subtarefa excluída com sucesso!',
+            'data' => new SubtaskResource($subtask),
+        ], 200);
     }
 
-    public function bulkComplete(Request $request, int $projectId, int $taskId)
+    public function bulkComplete(BulkSubtaskRequest $request, Project $project, Task $task)
     {
-        $validate = $request->validate([
-            'subtask_ids' => ['required', 'array', 'min:1'],
-            'subtask_ids.*' => ['required', 'integer', 'distinct'],
-        ]);
+        $validate = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
+        $subtaskIds = $validate['subtask_ids'];
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $foundIds = $task->subtasks()
+            ->whereIn('id', $subtaskIds)
+            ->pluck('id')
+            ->all();
 
-            $task = $project->tasks()->find($taskId);
+        $notFound = array_values(array_diff($subtaskIds, $foundIds));
 
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
+        $completed = 0;
 
-            $subtaskIds = $validate['subtask_ids'];
-
-            $subtasks = $task->subtasks()
-                ->whereIn('id', $subtaskIds)
-                ->get();
-
-            $foundIds = [];
-
-            foreach ($subtasks as $subtask) {
-                $foundIds[] = $subtask->id;
-            }
-
-            $notFound = [];
-
-            foreach ($subtaskIds as $subtaskId) {
-                if (!in_array($subtaskId, $foundIds)) {
-                    $notFound[] = $subtaskId;
-                }
-            }
-
-            $completed = 0;
-
-            if (count($foundIds) > 0) {
-                $completed = $task->subtasks()
-                    ->whereIn('id', $foundIds)
-                    ->update([
-                        'done' => true,
-                    ]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Operação concluída!',
-                'completed' => $completed,
-                'not_found' => $notFound,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno ao tentar concluir subtarefas em lote!',
-            ], 500);
+        if (count($foundIds) > 0) {
+            $completed = $task->subtasks()
+                ->whereIn('id', $foundIds)
+                ->update(['done' => true]);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Operação concluída!',
+            'completed' => $completed,
+            'not_found' => $notFound,
+        ], 200);
     }
 
-    public function bulkDelete(Request $request, int $projectId, int $taskId)
+    public function bulkDelete(BulkSubtaskRequest $request, Project $project, Task $task)
     {
-        $validate = $request->validate([
-            'subtask_ids' => ['required', 'array', 'min:1'],
-            'subtask_ids.*' => ['required', 'integer', 'distinct'],
-        ]);
+        $validate = $request->validated();
 
-        try {
-            $project = Project::find($projectId);
+        $subtaskIds = $validate['subtask_ids'];
 
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Projeto não encontrado!',
-                ], 404);
-            }
+        $foundIds = $task->subtasks()
+            ->whereIn('id', $subtaskIds)
+            ->pluck('id')
+            ->all();
 
-            $task = $project->tasks()->find($taskId);
+        $notFound = array_values(array_diff($subtaskIds, $foundIds));
 
-            if (!$task) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tarefa não encontrada!',
-                ], 404);
-            }
+        $deleted = 0;
 
-            $subtaskIds = $validate['subtask_ids'];
-
-            $subtasks = $task->subtasks()
-                ->whereIn('id', $subtaskIds)
-                ->get();
-
-            $foundIds = [];
-
-            foreach ($subtasks as $subtask) {
-                $foundIds[] = $subtask->id;
-            }
-
-            $notFound = [];
-
-            foreach ($subtaskIds as $subtaskId) {
-                if (!in_array($subtaskId, $foundIds)) {
-                    $notFound[] = $subtaskId;
-                }
-            }
-
-            $deleted = 0;
-
-            if (count($foundIds) > 0) {
-                $deleted = $task->subtasks()
-                    ->whereIn('id', $foundIds)
-                    ->delete();
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Operação concluída!',
-                'deleted' => $deleted,
-                'not_found' => $notFound,
-            ], 200);
-        } catch (Throwable $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno ao tentar excluir subtarefas em lote!',
-            ], 500);
+        if (count($foundIds) > 0) {
+            $deleted = $task->subtasks()
+                ->whereIn('id', $foundIds)
+                ->delete();
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Operação concluída!',
+            'deleted' => $deleted,
+            'not_found' => $notFound,
+        ], 200);
     }
 }
