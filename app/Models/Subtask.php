@@ -4,11 +4,14 @@ namespace App\Models;
 
 use App\Observers\InvalidatesProjectStats;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 #[ObservedBy(InvalidatesProjectStats::class)]
 class Subtask extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
         'task_id',
