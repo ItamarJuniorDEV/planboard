@@ -16,6 +16,11 @@ class Column extends Model
         'position',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function board()
     {
         return $this->belongsTo(Board::class);
