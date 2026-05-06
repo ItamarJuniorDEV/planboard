@@ -144,29 +144,49 @@ class TaskTest extends TestCase
         $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
     }
 
-    public function test_move_to_column_move_a_tarefa()
+    public function test_move_atualiza_a_coluna_da_tarefa()
     {
-        $board = Board::factory()->for($this->projeto)->for($this->membro)->create();
-        $column = Column::factory()->for($board)->for($this->membro)->create();
-        $task = Task::factory()->for($this->projeto)->for($this->membro)->create(['column_id' => $column->id]);
+        $boardOrigem = Board::factory()->for($this->projeto)->for($this->membro)->create();
+        $colunaOrigem = Column::factory()->for($boardOrigem)->for($this->membro)->create();
+        $colunaDestino = Column::factory()->for($boardOrigem)->for($this->membro)->create();
+        $task = Task::factory()->for($this->projeto)->for($this->membro)->create(['column_id' => $colunaOrigem->id]);
 
         $response = $this->actingAs($this->membro, 'sanctum')
-            ->patchJson("/api/projects/{$this->projeto->id}/boards/{$board->id}/columns/{$column->id}/tasks/{$task->id}/move");
+            ->patchJson("/api/projects/{$this->projeto->id}/tasks/{$task->id}/move", [
+                'column_id' => $colunaDestino->id,
+            ]);
 
         $response->assertOk();
-        $this->assertDatabaseHas('tasks', ['id' => $task->id, 'column_id' => $column->id]);
+        $this->assertDatabaseHas('tasks', ['id' => $task->id, 'column_id' => $colunaDestino->id]);
     }
 
-    public function test_move_to_column_recusa_quando_tarefa_nao_e_do_dono()
+    public function test_move_recusa_quando_tarefa_nao_e_do_dono()
     {
         $board = Board::factory()->for($this->projeto)->for($this->membro)->create();
         $column = Column::factory()->for($board)->for($this->membro)->create();
-        $task = Task::factory()->for($this->projeto)->for($this->membro)->create(['column_id' => $column->id]);
+        $task = Task::factory()->for($this->projeto)->for($this->membro)->create();
 
         $response = $this->actingAs($this->outro, 'sanctum')
-            ->patchJson("/api/projects/{$this->projeto->id}/boards/{$board->id}/columns/{$column->id}/tasks/{$task->id}/move");
+            ->patchJson("/api/projects/{$this->projeto->id}/tasks/{$task->id}/move", [
+                'column_id' => $column->id,
+            ]);
 
         $response->assertStatus(403);
+    }
+
+    public function test_move_recusa_coluna_de_outro_projeto()
+    {
+        $outroProjeto = Project::factory()->for($this->membro)->create();
+        $boardEstrangeiro = Board::factory()->for($outroProjeto)->for($this->membro)->create();
+        $colunaEstrangeira = Column::factory()->for($boardEstrangeiro)->for($this->membro)->create();
+        $task = Task::factory()->for($this->projeto)->for($this->membro)->create();
+
+        $response = $this->actingAs($this->membro, 'sanctum')
+            ->patchJson("/api/projects/{$this->projeto->id}/tasks/{$task->id}/move", [
+                'column_id' => $colunaEstrangeira->id,
+            ]);
+
+        $response->assertStatus(404);
     }
 
     public function test_bulk_move_atualiza_tarefas_e_reporta_nao_encontradas()
