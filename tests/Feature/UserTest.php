@@ -172,4 +172,13 @@ class UserTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_admin_nao_pode_deletar_a_si_mesmo()
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->deleteJson("/api/users/{$this->admin->id}");
+
+        $response->assertStatus(403);
+        $this->assertDatabaseHas('users', ['id' => $this->admin->id]);
+    }
 }
