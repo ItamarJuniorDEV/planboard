@@ -25,6 +25,7 @@ class SecurityTest extends TestCase
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
         $response->assertHeader('X-Frame-Options', 'DENY');
         $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->assertHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
     }
 
     public function test_idor_em_board_de_outro_projeto_retorna_404()
