@@ -21,6 +21,8 @@ A escolha do dominio kanban veio porque me da varios ganchos para praticar coisa
 
 Com Docker (o `docker-compose.yml` sobe MySQL 8 e phpMyAdmin):
 
+    git clone https://github.com/ItamarJuniorDEV/planboard-api.git
+    cd planboard-api
     cp .env.example .env
     docker compose up -d
     composer install
