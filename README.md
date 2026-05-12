@@ -1,168 +1,89 @@
 # Planboard API
 
-API RESTful para gerenciamento de projetos com quadros kanban.
+API REST em Laravel 12 para gestao de projetos em quadros kanban. Cobre a hierarquia de projeto, quadro, coluna, tarefa, subtarefa, comentario, marco e etiqueta, com autenticacao via Sanctum, autorizacao por dono do recurso e algumas operacoes em lote.
 
-A ideia era ter um backend completo pra organizar projetos em equipe — com autenticação, controle de papel, autorização por dono do recurso e operações em lote. O projeto serviu pra explorar esses padrões de forma mais próxima de como aparecem em sistemas reais.
+## Motivacao
 
----
+Fiz esse projeto como exercicio pessoal pra praticar Laravel 12 em algo um pouco maior que um CRUD de blog. Queria entender como modelar uma hierarquia razoavel de recursos (projeto contendo quadros, quadros contendo colunas, colunas e tarefas no mesmo projeto) sem deixar o controle de acesso vazar pelas beiradas. A regra de "so o dono ou um admin mexe" e simples de falar e chata de garantir em rotas aninhadas, entao foi um bom motivo pra mergulhar de cabeca em Policies, Form Requests com `authorize()` real e route model binding com `scopeBindings()`.
 
-## Funcionalidades
+A escolha do dominio kanban veio porque me da varios ganchos para praticar coisas que normalmente fingem ser tutoriais: cache de query quente (estatisticas do projeto), operacoes em lote (mover varias tarefas de coluna de uma vez), validacao cruzada de recursos (a coluna destino tem que ser do mesmo projeto da tarefa). E ainda permite gerar uma documentacao OpenAPI decente sem ter que escrever annotation a annotation.
 
-- Autenticação por token com Laravel Sanctum
-- CRUD completo de projetos, quadros, colunas, tarefas, subtarefas, comentários, marcos e etiquetas
-- Suporte a kanban: mover tarefas entre colunas, mover e excluir em lote
-- Autorização por dono do recurso — só o criador ou um admin pode editar/deletar
-- Controle de acesso por papel (admin / member)
-- Filtros, busca e paginação nos endpoints de listagem
-- Estatísticas do projeto: tarefas por status/prioridade, progresso de subtarefas e marcos em atraso
+## Stack
 
----
+- PHP 8.3
+- Laravel 12
+- Laravel Sanctum 4 (autenticacao por token e por sessao SPA)
+- MySQL 8 em producao, SQLite em memoria nos testes
+- PHPUnit 11.5
+- dedoc/scramble para gerar OpenAPI a partir dos tipos PHP
 
-## Tecnologias
+## Como rodar
 
-- PHP 8.3 / Laravel 12
-- MySQL
-- Laravel Sanctum (autenticação)
-- PHPUnit (testes)
-- Docker
+Com Docker (o `docker-compose.yml` sobe MySQL 8 e phpMyAdmin):
 
----
+    cp .env.example .env
+    docker compose up -d
+    composer install
+    php artisan key:generate
+    php artisan migrate --seed
+    php artisan serve
 
-## Instalação
+O phpMyAdmin fica em `http://localhost:8888` com as credenciais do `.env`.
 
-**Pré-requisitos:** PHP 8.3+, Composer, MySQL
+Sem Docker (basta um MySQL local ou SQLite):
 
-```bash
-git clone https://github.com/ItamarJuniorDEV/planboard-api.git
-cd planboard-api
-cp .env.example .env
-composer install
-php artisan key:generate
-php artisan migrate
-```
+    cp .env.example .env
+    composer install
+    php artisan key:generate
+    php artisan migrate --seed
+    php artisan serve
 
-## Rodando
+Para usar SQLite ao inves de MySQL, basta deixar `DB_CONNECTION=sqlite` no `.env` e criar o arquivo `database/database.sqlite`.
 
-```bash
-php artisan serve
-```
+## Decisoes de arquitetura
 
----
+Optei por Sanctum em vez de Passport. A API nao expoe OAuth para clientes de terceiros, ela atende a um frontend proprio (ou ao Postman do dev). Sanctum cobre os dois cenarios uteis aqui: token bearer para clientes mobile/CLI e cookie de sessao para SPA na mesma origem. Passport seria complexidade sem retorno.
 
-## Autenticação
+A autorizacao mora em Policies por recurso, uma por modelo de dominio, com `Gate::before` no `AppServiceProvider` liberando admin em tudo, com uma excecao deliberada: admin nao pode deletar `User` via API. Sem essa excecao, qualquer admin chamando `DELETE /api/users/me` apagaria a propria conta. As Form Requests por acao chamam `$this->user()->can('verb', $this->route('model'))` dentro de `authorize()`, entao quem chega no controller ja passou pela policy. Nao tem `return true` mentiroso em Form Request.
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| POST | `/api/login` | Login e geração de token |
-| POST | `/api/logout` | Revogar token |
+Todas as rotas aninhadas usam `scopeBindings()`. Isso significa que `/api/projects/{project}/boards/{board}` so resolve o board se ele realmente pertencer aquele projeto. Sem `scopeBindings`, um usuario poderia mandar `/api/projects/1/boards/999` e o Laravel devolveria o board 999 mesmo que ele seja de outro projeto, abrindo a porta para IDOR. Com `scopeBindings`, o 404 vem antes do controller.
 
-Todos os outros endpoints exigem o header `Authorization: Bearer {token}`.
+Resposta sempre serializa via API Resource. Mesmo nos endpoints paginados o envelope `data` e preservado, porque a chamada e `Resource::collection($paginator)->resource = $paginator`, o que mantem `meta` e `links` da paginacao no nivel raiz e o array de recursos dentro de `data`. Decidi nao introduzir Repository pattern: o projeto e medio-pequeno, Eloquent direto no controller resolve, e abstrair atras de uma interface com uma unica implementacao seria overhead sem motivo. Pelo mesmo principio, nao criei camada de Service ou Action: nao ha logica de negocio que extrapole CRUD a ponto de justificar uma classe a parte. Tambem nao subi infraestrutura de Queue. A API nao manda email, nao gera PDF, nao chama webhook externo, nao tem nada que precise rodar fora do request-response.
 
----
+Existe um unico ponto de cache: `project:{id}:stats` com TTL de 60 segundos. As estatisticas sao a consulta mais cara do projeto (agrega tarefas por status, prioridade, progresso de subtarefas, marcos em atraso) e mudam pouco em relacao a frequencia com que a dashboard pede. A invalidacao e explicita via Observer `InvalidatesProjectStats` registrado em Task, Subtask e Milestone, entao qualquer save ou delete nessas entidades zera a chave correspondente.
 
-## Endpoints
+Seguranca transversal: rate limit de 60 por minuto no grupo `api` (chave por user id, ou IP quando nao autenticado), 5 por minuto no `login` (chave por email + IP, suficiente pra travar brute force sem trancar legitimos). Middleware `SecurityHeaders` aplicado em todo o grupo API com `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` restritivo, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` (a API so devolve JSON, entao CSP pode ser bem fechado) e HSTS condicional a producao + HTTPS. CORS com origens explicitas em `config/cors.php`, sem wildcard, porque `supports_credentials=true`. O login usa `Timebox::call(..., 500_000)` e mensagem uniforme `Credenciais invalidas` para nao vazar a existencia do email. Em desenvolvimento, `Model::preventLazyLoading()` esta ligado pra estourar excecao se algum N+1 escapar pro controller.
 
-### Projetos
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/projects` | Listar projetos |
-| GET | `/api/projects/{id}` | Buscar projeto |
-| POST | `/api/projects` | Criar projeto |
-| PUT | `/api/projects/{id}` | Atualizar projeto |
-| DELETE | `/api/projects/{id}` | Deletar projeto |
-| GET | `/api/projects/{id}/stats` | Estatísticas do projeto |
+## Documentacao da API
 
-### Quadros
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/projects/{projectId}/boards` | Listar quadros |
-| POST | `/api/projects/{projectId}/boards` | Criar quadro |
-| PUT | `/api/projects/{projectId}/boards/{id}` | Atualizar quadro |
-| DELETE | `/api/projects/{projectId}/boards/{id}` | Deletar quadro |
+A documentacao OpenAPI e gerada pelo `dedoc/scramble` a partir dos tipos do PHP (Form Requests, Resources, type hints). Subindo o servidor com `php artisan serve`, a interface fica em:
 
-### Colunas
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/projects/{projectId}/boards/{boardId}/columns` | Listar colunas |
-| POST | `/api/projects/{projectId}/boards/{boardId}/columns` | Criar coluna |
-| PUT | `/api/projects/{projectId}/boards/{boardId}/columns/{id}` | Atualizar coluna |
-| DELETE | `/api/projects/{projectId}/boards/{boardId}/columns/{id}` | Deletar coluna |
+    http://localhost:8000/docs/api
 
-### Tarefas
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/projects/{projectId}/tasks` | Listar tarefas |
-| POST | `/api/projects/{projectId}/tasks` | Criar tarefa |
-| PUT | `/api/projects/{projectId}/tasks/{id}` | Atualizar tarefa |
-| DELETE | `/api/projects/{projectId}/tasks/{id}` | Deletar tarefa |
-| PATCH | `/api/projects/{projectId}/boards/{boardId}/columns/{columnId}/tasks/{taskId}/move` | Mover tarefa para coluna |
-| PATCH | `/api/projects/{projectId}/tasks/bulk-move` | Mover tarefas em lote |
-| POST | `/api/projects/{projectId}/tasks/bulk-delete` | Deletar tarefas em lote |
-
-### Subtarefas
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/projects/{projectId}/tasks/{taskId}/subtasks` | Listar subtarefas |
-| POST | `/api/projects/{projectId}/tasks/{taskId}/subtasks` | Criar subtarefa |
-| PUT | `/api/projects/{projectId}/tasks/{taskId}/subtasks/{id}` | Atualizar subtarefa |
-| DELETE | `/api/projects/{projectId}/tasks/{taskId}/subtasks/{id}` | Deletar subtarefa |
-| POST | `/api/projects/{projectId}/tasks/{taskId}/subtasks/bulk-complete` | Concluir em lote |
-| POST | `/api/projects/{projectId}/tasks/{taskId}/subtasks/bulk-delete` | Deletar em lote |
-
-### Comentários
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/projects/{projectId}/tasks/{taskId}/comments` | Listar comentários |
-| POST | `/api/projects/{projectId}/tasks/{taskId}/comments` | Criar comentário |
-| PUT | `/api/projects/{projectId}/tasks/{taskId}/comments/{id}` | Atualizar comentário |
-| DELETE | `/api/projects/{projectId}/tasks/{taskId}/comments/{id}` | Deletar comentário |
-
-### Marcos
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/projects/{projectId}/milestones` | Listar marcos |
-| POST | `/api/projects/{projectId}/milestones` | Criar marco |
-| PUT | `/api/projects/{projectId}/milestones/{id}` | Atualizar marco |
-| DELETE | `/api/projects/{projectId}/milestones/{id}` | Deletar marco |
-
-### Etiquetas
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/projects/{projectId}/labels` | Listar etiquetas |
-| POST | `/api/projects/{projectId}/labels` | Criar etiqueta |
-| PUT | `/api/projects/{projectId}/labels/{id}` | Atualizar etiqueta |
-| DELETE | `/api/projects/{projectId}/labels/{id}` | Deletar etiqueta |
-
-### Usuários *(somente admin)*
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/users` | Listar usuários |
-| GET | `/api/users/{id}` | Buscar usuário |
-| POST | `/api/users` | Criar usuário |
-| PUT | `/api/users/{id}` | Atualizar usuário |
-| DELETE | `/api/users/{id}` | Deletar usuário |
-
----
-
-## Controle de Acesso
-
-| Papel | Permissões |
-|-------|------------|
-| `admin` | Acesso total — pode editar e deletar qualquer recurso |
-| `member` | Acesso aos próprios recursos — só pode editar/deletar o que criou |
-
----
+O JSON cru fica em `/docs/api.json`. O security scheme `bearerAuth` ja vem configurado e aplicado automaticamente em todas as rotas protegidas por `auth:sanctum`.
 
 ## Testes
 
-Os testes rodam com SQLite em memória, sem precisar do MySQL configurado.
+Rodam contra SQLite em memoria, com `RefreshDatabase` por feature test. Cobertura inclui autenticacao, autorizacao (admin vs dono vs outro usuario), CRUD de projetos e tarefas, controle de papel em `/api/users` e hash de senha. Para executar:
 
-```bash
-php artisan test
-```
+    php artisan test
 
----
+## Melhorias futuras
 
-## Licença
+Cobertura de testes mais ampla nos recursos secundarios (boards, columns, comments, subtasks, milestones, labels) e cenarios negativos extras nos endpoints em lote.
 
-MIT
+Adicionar GitHub Actions com matriz para PHP 8.3 rodando o suite de testes, lint via Pint e validacao do OpenAPI exportado.
+
+Refresh tokens para sessoes longas de SPA, hoje o Sanctum esta com `expiration => null`.
+
+Filtros e ordenacao mais expressivos nos endpoints de listagem usando algo como Spatie Query Builder, com paginacao por cursor onde fizer sentido.
+
+Webhook de eventos do dominio (tarefa criada, tarefa movida, marco vencido) para permitir integracao externa sem polling. Isso traria uma Queue de verdade pro projeto.
+
+## Seguranca
+
+Reporte de vulnerabilidades e politica de divulgacao estao em [SECURITY.md](SECURITY.md).
+
+## Licenca
+
+MIT.
