@@ -16,4 +16,4 @@ Ao reportar, inclui se possível: descrição do problema, passos pra reproduzir
 
 ## Escopo
 
-Esta política cobre o código deste repositório. Vulnerabilidades em dependências devem ser reportadas aos respectivos mantenedores. Configurações inseguras em ambientes de deploy próprios (chaves expostas, `APP_DEBUG=true` em produção, banco sem senha) não são tratadas como vulnerabilidade do projeto.
+Cobre o código que está aqui no repo. Vulnerabilidades em dependências devem ser reportadas aos respectivos mantenedores. Configurações inseguras em ambientes de deploy próprios (chaves expostas, `APP_DEBUG=true` em produção, banco sem senha) não conta como vulnerabilidade aqui.

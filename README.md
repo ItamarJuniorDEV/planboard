@@ -10,7 +10,7 @@ API REST em Laravel 12 para gestão de projetos em quadros kanban. Cobre a hiera
 
 ## Motivação
 
-Fiz esse projeto como exercício pessoal pra praticar Laravel 12 em algo um pouco maior que um CRUD de blog. Queria entender como modelar uma hierarquia razoável de recursos (projeto contendo quadros, quadros contendo colunas, colunas e tarefas no mesmo projeto) sem deixar o controle de acesso vazar pelas beiradas. A regra de "só o dono ou um admin mexe" é simples de falar e chata de garantir em rotas aninhadas, então foi um bom motivo pra mergulhar de cabeça em Policies, Form Requests com `authorize()` real e route model binding com `scopeBindings()`.
+Fiz esse projeto como exercício pessoal pra praticar Laravel 12 em algo um pouco maior que um CRUD de blog. Queria entender como modelar uma hierarquia razoável de recursos (projeto contendo quadros, quadros contendo colunas, colunas e tarefas no mesmo projeto) sem deixar o controle de acesso vazar pelas beiradas. A regra de "só o dono ou um admin mexe" é simples de falar e chata de garantir em rotas aninhadas, então foi um bom motivo pra estudar Policies a sério, Form Requests com `authorize()` real e route model binding com `scopeBindings()`.
 
 A escolha do domínio kanban veio porque me dá vários ganchos para praticar coisas que normalmente fingem ser tutoriais: cache de query quente (estatísticas do projeto), operações em lote (mover várias tarefas de coluna de uma vez), validação cruzada de recursos (a coluna destino tem que ser do mesmo projeto da tarefa). E ainda permite gerar uma documentação OpenAPI decente sem ter que escrever annotation a annotation.
 
@@ -50,13 +50,17 @@ Pra usar SQLite ao invés de MySQL, é só deixar `DB_CONNECTION=sqlite` no `.en
 
 ## Decisões de arquitetura
 
-Optei por Sanctum em vez de Passport. A API não expõe OAuth para clientes de terceiros, ela atende um frontend próprio (ou o Postman do dev). Sanctum cobre os dois cenários úteis aqui: token bearer para clientes mobile/CLI e cookie de sessão para SPA na mesma origem. Passport seria complexidade sem retorno.
+Optei por Sanctum em vez de Passport. A API não expõe OAuth para clientes de terceiros, ela atende um frontend próprio (ou o Postman do dev). Sanctum cobre os dois cenários úteis aqui: token bearer para clientes mobile/CLI e cookie de sessão para SPA na mesma origem. Passport seria over-engineering pra esse caso.
 
 A autorização mora em Policies por recurso, uma por modelo de domínio, com `Gate::before` no `AppServiceProvider` liberando admin em tudo, com uma exceção deliberada: admin não pode deletar `User` via API. Sem essa exceção, qualquer admin chamando `DELETE /api/users/me` apagaria a própria conta. As Form Requests por ação chamam `$this->user()->can('verb', $this->route('model'))` dentro de `authorize()`, então quem chega no controller já passou pela policy. Não tem `return true` mentiroso em Form Request.
 
 Todas as rotas aninhadas usam `scopeBindings()`. Isso significa que `/api/projects/{project}/boards/{board}` só resolve o board se ele realmente pertencer àquele projeto. Sem `scopeBindings`, um usuário poderia mandar `/api/projects/1/boards/999` e o Laravel devolveria o board 999 mesmo que ele seja de outro projeto, abrindo a porta pra IDOR. Com `scopeBindings`, o 404 vem antes do controller.
 
-Resposta sempre serializa via API Resource. Mesmo nos endpoints paginados o envelope `data` é preservado, porque a chamada é `Resource::collection($paginator)->resource = $paginator`, o que mantém `meta` e `links` da paginação no nível raiz e o array de recursos dentro de `data`. Decidi não introduzir Repository pattern: o projeto é médio-pequeno, Eloquent direto no controller resolve, e abstrair atrás de uma interface com uma única implementação seria overhead sem motivo. Pelo mesmo princípio, não criei camada de Service ou Action: não há lógica de negócio que extrapole CRUD a ponto de justificar uma classe à parte. Também não subi infraestrutura de Queue. A API não manda email, não gera PDF, não chama webhook externo, não tem nada que precise rodar fora do request-response.
+Resposta sempre serializa via API Resource. Mesmo nos endpoints paginados o envelope `data` é preservado, porque a chamada é `Resource::collection($paginator)->resource = $paginator`, o que mantém `meta` e `links` da paginação no nível raiz e o array de recursos dentro de `data`.
+
+Decidi não introduzir Repository pattern. O projeto é médio-pequeno, Eloquent direto no controller resolve, e criar interface pra uma implementação só não faz sentido aqui. Mesma coisa com Service ou Action: não tem lógica de negócio que mereça classe própria.
+
+Também não subi infraestrutura de Queue. A API não manda email, não gera PDF, não chama webhook externo. Nada que precise rodar fora do request-response.
 
 Existe um único ponto de cache: `project:{id}:stats` com TTL de 60 segundos. As estatísticas são a consulta mais cara do projeto (agrega tarefas por status, prioridade, progresso de subtarefas, marcos em atraso) e mudam pouco em relação à frequência com que a dashboard pede. A invalidação é explícita via Observer `InvalidatesProjectStats` registrado em Task, Subtask e Milestone, então qualquer save ou delete nessas entidades zera a chave correspondente.
 
@@ -78,15 +82,13 @@ Rodam contra SQLite em memória, com `RefreshDatabase` por feature test. A cober
 
 ## Melhorias futuras
 
-Cobertura de testes mais ampla nos recursos secundários (boards, columns, comments, subtasks, milestones, labels) e cenários negativos extras nos endpoints em lote.
-
-Adicionar GitHub Actions com matriz para PHP 8.3 rodando a suite de testes, lint via Pint e validação do OpenAPI exportado.
-
-Refresh tokens para sessões longas de SPA — hoje o Sanctum está com `expiration => null`.
-
-Filtros e ordenação mais expressivos nos endpoints de listagem usando algo como Spatie Query Builder, com paginação por cursor onde fizer sentido.
-
-Webhook de eventos do domínio (tarefa criada, tarefa movida, marco vencido) pra permitir integração externa sem polling. Isso traria uma Queue de verdade pro projeto.
+- Cobertura de testes nos recursos secundários (boards, columns, comments, subtasks, milestones, labels).
+- Cenários negativos extras nos endpoints em lote.
+- Matriz PHP 8.3 no GitHub Actions com Pint e validação do OpenAPI.
+- Refresh token (hoje Sanctum tá com `expiration => null`).
+- Cursor pagination nos endpoints de listagem.
+- Filtros mais expressivos via Spatie Query Builder.
+- Webhook de eventos de domínio (tarefa criada, movida, marco vencido). Aí entra Queue de verdade.
 
 ## Segurança
 
