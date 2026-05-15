@@ -1,5 +1,11 @@
 # Planboard API
 
+![CI](https://github.com/ItamarJuniorDEV/planboard-api/actions/workflows/ci.yml/badge.svg)
+![Security](https://github.com/ItamarJuniorDEV/planboard-api/actions/workflows/security.yml/badge.svg)
+![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 API REST em Laravel 12 para gestao de projetos em quadros kanban. Cobre a hierarquia de projeto, quadro, coluna, tarefa, subtarefa, comentario, marco e etiqueta, com autenticacao via Sanctum, autorizacao por dono do recurso e algumas operacoes em lote.
 
 ## Motivacao
