@@ -27,3 +27,8 @@ mysql_data/
 docs/ajustes.txt
 /padroes
 .claude
+CLAUDE.md
+**/CLAUDE.md
+scripts/do-rewrite*.sh
+scripts/rewrite-history.sh
+timeline.txt
