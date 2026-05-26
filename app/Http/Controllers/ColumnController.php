@@ -43,7 +43,7 @@ class ColumnController extends Controller
     {
         $validated = $request->validated();
 
-        $column = new Column();
+        $column = new Column;
         $column->board_id = $board->id;
         $column->user_id = $request->user()->id;
         $column->name = $validated['name'];

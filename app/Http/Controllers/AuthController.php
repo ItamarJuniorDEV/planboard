@@ -15,7 +15,7 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
-        $user = (new Timebox())->call(function () use ($validated) {
+        $user = (new Timebox)->call(function () use ($validated) {
             $candidate = User::where('email', $validated['email'])->first();
 
             return ($candidate && Hash::check($validated['password'], $candidate->password))

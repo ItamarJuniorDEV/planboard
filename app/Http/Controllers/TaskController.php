@@ -72,7 +72,7 @@ class TaskController extends Controller
     {
         $validate = $request->validated();
 
-        $task = new Task();
+        $task = new Task;
         $task->project_id = $project->id;
         $task->user_id = $request->user()->id;
         $task->title = $validate['title'];

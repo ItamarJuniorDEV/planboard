@@ -72,7 +72,7 @@ class ProjectController extends Controller
     {
         $validate = $request->validated();
 
-        $project = new Project();
+        $project = new Project;
         $project->title = $validate['title'];
         $project->description = $validate['description'] ?? null;
         $project->budget = $validate['budget'];

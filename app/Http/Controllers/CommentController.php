@@ -33,7 +33,7 @@ class CommentController extends Controller
     {
         $validate = $request->validated();
 
-        $comment = new Comment();
+        $comment = new Comment;
         $comment->task_id = $task->id;
         $comment->user_id = $request->user()->id;
         $comment->content = $validate['content'];
