@@ -41,7 +41,7 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
-        $created = new User();
+        $created = new User;
         $created->name = $validated['name'];
         $created->email = $validated['email'];
         $created->password = Hash::make($validated['password']);

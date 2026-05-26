@@ -44,7 +44,7 @@ class SubtaskController extends Controller
     {
         $validate = $request->validated();
 
-        $subtask = new Subtask();
+        $subtask = new Subtask;
         $subtask->task_id = $task->id;
         $subtask->user_id = $request->user()->id;
         $subtask->title = $validate['title'];

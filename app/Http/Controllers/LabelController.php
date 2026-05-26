@@ -48,7 +48,7 @@ class LabelController extends Controller
     {
         $validated = $request->validated();
 
-        $label = new Label();
+        $label = new Label;
         $label->project_id = $project->id;
         $label->user_id = $request->user()->id;
         $label->name = $validated['name'];

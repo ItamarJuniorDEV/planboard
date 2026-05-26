@@ -49,7 +49,7 @@ class MilestoneController extends Controller
     {
         $validated = $request->validated();
 
-        $milestone = new Milestone();
+        $milestone = new Milestone;
         $milestone->project_id = $project->id;
         $milestone->user_id = $request->user()->id;
         $milestone->title = $validated['title'];

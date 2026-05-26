@@ -52,7 +52,7 @@ class BoardController extends Controller
     {
         $validate = $request->validated();
 
-        $board = new Board();
+        $board = new Board;
         $board->project_id = $project->id;
         $board->user_id = $request->user()->id;
         $board->name = $validate['name'];
